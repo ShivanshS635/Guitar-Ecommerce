@@ -98,20 +98,22 @@ const Product = () => {
           <p className="mt-5 text-gray-500 md:w-4/5">{productData.description}</p>
 
           <button
-            onClick={handleAddToCart}
-            className={`flex items-center justify-center gap-2 px-8 py-3 text-sm mt-8 rounded-full transition-all duration-300 shadow-md text-white ${
-              added
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600'
-            }`}
-          >
-            <img
-              src={added ? assets.checkIcon : assets.cartLogo}
-              alt="icon"
-              className="w-4 h-4 filter brightness-0 invert"
-            />
-            {added ? 'Added!' : 'Add to Cart'}
-          </button>
+  onClick={handleAddToCart}
+  className={`flex items-center justify-center gap-2 px-8 py-3 text-sm mt-8 rounded-full transition-all duration-300 shadow-md text-white ${
+    added
+      ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800' // Green gradient for Added!
+      : 'bg-yellow-600 hover:bg-yellow-700' // Yellowish theme for Add to Cart state
+  }`}
+>
+  <img
+    src={added ? assets.checkIcon : assets.cartLogo}
+    alt="icon"
+    className="w-4 h-4 filter brightness-0 invert"
+  />
+  {added ? 'Added!' : 'Add to Cart'}
+</button>
+
+
 
           <hr className="mt-8 md:w-4/5" />
           <div className="text-sm text-gray-500 mt-5 flex flex-col gap-1">
