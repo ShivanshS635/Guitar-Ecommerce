@@ -6,5 +6,12 @@ export default defineConfig({
     tailwindcss(),
     react(),
   ],
-  serve : {port : 5173}
+  serve : {port : 5173},build: {
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+      },
+    },
+  },
 })
+
