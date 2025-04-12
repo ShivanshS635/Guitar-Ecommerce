@@ -8,7 +8,7 @@ const LatestProducts = () => {
     const [latestProducts , setLatestProducts] = useState([]);
 
     useEffect(() => {
-        setLatestProducts(products.slice(0,6));
+        setLatestProducts(products.reverse().slice(0,10));
     } , []);
   return (
     <div className='my-10'>
