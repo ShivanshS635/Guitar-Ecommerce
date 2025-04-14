@@ -31,13 +31,36 @@ const placeOrder = async (req, res) => {
   }
 };
 
-//Placing Order Using Stripe
+//Placing Order Using Paypal
 
-const placeOrderStripe = async (req, res) => {};
+const placeOrderPaypal = async (req, res) => {
+  try {
+    const { items, amount, address } = req.body;
+    const { userId } = req.user;
 
-//Placing Order Using Razorpay
+    const orderData = {
+      userId,
+      items,
+      address,
+      amount,
+      paymentMethod: "paypal",
+      payment: true,
+      date: Date.now(),
+    };
 
-const placeOrderRazorpay = async (req, res) => {};
+    const newOrder = new Order(orderData);
+    await newOrder.save();
+
+    // Clear user cart
+    await User.findByIdAndUpdate(userId, { cartData: {} });
+
+    res.json({ success: true, message: "PayPal Order Placed" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 
 //Get All Orders For Admin
 
@@ -73,8 +96,7 @@ const updateStatus = async (req, res) => {};
 
 export {
   placeOrder,
-  placeOrderRazorpay,
-  placeOrderStripe,
+  placeOrderPaypal,
   allOrders,
   userOrders,
   updateStatus,

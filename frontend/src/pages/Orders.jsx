@@ -122,12 +122,6 @@ const Orders = () => {
     // Save PDF
     doc.save(`Receipt_${order._id}.pdf`);
   };
-  
-  
-  
-  
-  
-  
 
 
   return (

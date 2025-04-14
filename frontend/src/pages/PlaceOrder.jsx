@@ -1,20 +1,21 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import OrderSuccessOverlay from '../components/OrderSuccessOverlay';
 import Title from '../components/Title';
-import CartTotal from '../components/CartTotal'
+import CartTotal from '../components/CartTotal';
 import { assets } from '../assets/assets';
 
 const PlaceOrder = () => {
   const inputStyle =
-  'w-full py-2 px-4 rounded-md bg-white/80 text-gray-800 placeholder-gray-500 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-sm';
+    'w-full py-2 px-4 rounded-md bg-white/80 text-gray-800 placeholder-gray-500 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-sm';
 
-const cardStyle =
-  'p-6 rounded-xl shadow-md border border-white/5 bg-gradient-to-br from-[#1b1b1b] via-[#121212] to-[#0d0d0d] text-yellow-100';
+  const cardStyle =
+    'p-6 rounded-xl shadow-md border border-white/5 bg-gradient-to-br from-[#1b1b1b] via-[#121212] to-[#0d0d0d] text-yellow-100';
 
   const { navigate, backendUrl, token, cartItems, setCartItems, getCartAmount, deliveryCharges, products } = useContext(ShopContext);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -26,8 +27,10 @@ const cardStyle =
     country: '',
     phone: ''
   });
+
   const [method, setMethod] = useState('cod');
-  const [showOverlay, setShowOverlay] = useState(false); // Define showOverlay state here
+  const [showOverlay, setShowOverlay] = useState(false);
+  const paypalRef = useRef();
 
   const onChangeHandler = (e) => {
     const { name, value } = e.target;
@@ -56,35 +59,95 @@ const cardStyle =
         date: Date.now(),
       };
 
-      switch (method) {
-        case 'cod':
-          const res = await axios.post(`${backendUrl}/api/order/place`, orderData, {
-            headers: { token },
-          });
+      if (method === 'cod') {
+        const res = await axios.post(`${backendUrl}/api/order/place`, orderData, {
+          headers: { token },
+        });
 
-          if (res.data.success) {
-            setCartItems({});
-            setShowOverlay(true); // Show overlay when order is placed
-            setTimeout(() => {
-              setShowOverlay(false); // Hide overlay after 5 seconds
-              navigate('/orders');
-            }, 5000); // Display overlay for 5 seconds
-          } else {
-            toast.error(res.data.message);
-          }
-          break;
-
-        default:
-          break;
+        if (res.data.success) {
+          setCartItems({});
+          setShowOverlay(true);
+          setTimeout(() => {
+            setShowOverlay(false);
+            navigate('/orders');
+          }, 5000);
+        } else {
+          toast.error(res.data.message);
+        }
       }
     } catch (error) {
       console.error(error.message);
     }
   };
 
+  useEffect(() => {
+    if (method === 'paypal' && window.paypal && paypalRef.current) {
+      window.paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [
+              {
+                amount: {
+                  value: (getCartAmount() + deliveryCharges).toFixed(2),
+                },
+              },
+            ],
+          });
+        },
+        onApprove: async (data, actions) => {
+          const paymentResult = await actions.order.capture();
+
+          try {
+            let orderItems = [];
+
+            for (const itemId in cartItems) {
+              const quantity = cartItems[itemId];
+              const product = products.find((product) => product._id === itemId);
+              if (product && quantity > 0) {
+                const itemInfo = structuredClone(product);
+                itemInfo.quantity = quantity;
+                orderItems.push(itemInfo);
+              }
+            }
+
+            const orderData = {
+              address: formData,
+              items: orderItems,
+              amount: getCartAmount() + deliveryCharges,
+              date: Date.now(),
+              paymentResult,
+            };
+
+            const res = await axios.post(`${backendUrl}/api/order/paypal`, orderData, {
+              headers: { token },
+            });
+
+            if (res.data.success) {
+              setCartItems({});
+              setShowOverlay(true);
+              setTimeout(() => {
+                setShowOverlay(false);
+                navigate('/orders');
+              }, 5000);
+            } else {
+              toast.error(res.data.message);
+            }
+          } catch (error) {
+            toast.error('Payment failed');
+            console.log(error);
+          }
+        },
+        onError: (err) => {
+          toast.error('PayPal error');
+          console.log(err);
+        },
+      }).render(paypalRef.current);
+    }
+  }, [method]);
+
   return (
     <>
-      {showOverlay && <OrderSuccessOverlay />} {/* Conditionally render the overlay */}
+      {showOverlay && <OrderSuccessOverlay />}
       <form
         onSubmit={submitHandler}
         className="flex flex-col sm:flex-row justify-between gap-8 pt-5 sm:pt-14 min-h-[80vh] border-t px-4 sm:px-8 lg:px-16 pb-10 bg-[#121212]"
@@ -142,12 +205,16 @@ const cardStyle =
             </div>
 
             <div className="w-full text-end mt-8">
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-16 py-3 text-sm rounded-full hover:opacity-90 active:scale-95 transition-transform"
-              >
-                PLACE ORDER
-              </button>
+              {method === 'paypal' ? (
+                <div ref={paypalRef} />
+              ) : (
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-16 py-3 text-sm rounded-full hover:opacity-90 active:scale-95 transition-transform"
+                >
+                  PLACE ORDER
+                </button>
+              )}
             </div>
           </div>
         </div>
