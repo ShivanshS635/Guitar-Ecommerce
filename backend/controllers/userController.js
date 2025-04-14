@@ -42,43 +42,28 @@ const loginUser = async (req, res) => {
 const registerUser = async (req, res) => {
     const { name, email, password } = req.body;
     try {
-        // Validate user input
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'Please provide all required fields' });
         }
-    
-        // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.json({success: false , message: 'User already exists' });
         }
-
-        //validate email format
         if (!validator.isEmail(email)) {
             return res.json({succes: false , message: 'Invalid email format' });
         }
-        // Validate password strength
         if(password.length < 8) {
             return res.json({success: false , message: 'Password must be at least 8 characters long' });
         }
-
-        // Hash password
         const salt = await bcryptjs.genSalt(10);
         const hashedPassword = await bcryptjs.hash(password, salt);
-    
-        // Create new user
         const newUser = new User({
             name,
             email,
             password : hashedPassword,
         });
-    
-        // Save user to the database
         const user = await newUser.save();
-    
-        // Generate JWT token
         const token = createToken(user._id);
-    
         res.json({success : true ,token});
     } catch (error) {
         console.log(error);

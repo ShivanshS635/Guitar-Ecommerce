@@ -10,14 +10,16 @@ const Cart = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const tempData = Object.keys(cartItems).map((item) => ({
-      _id: item,
-      quantity: cartItems[item],
-    }));
-
-    setCartData(tempData);
-    setTimeout(() => setLoading(false), 500); // Simulate loading
-  }, [cartItems]);
+    if(products.length > 0){
+      const tempData = Object.keys(cartItems).map((item) => ({
+        _id: item,
+        quantity: cartItems[item],
+      }));
+  
+      setCartData(tempData);
+      setTimeout(() => setLoading(false), 500);
+    }
+  }, [cartItems , products]);
 
   return (
     <div className="border-t pt-14 px-4 sm:px-8 text-yellow-100 bg-gradient-to-br from-[#1b1b1b] via-[#121212] to-[#0d0d0d] min-h-screen">

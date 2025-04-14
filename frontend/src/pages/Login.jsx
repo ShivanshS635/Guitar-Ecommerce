@@ -1,11 +1,50 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import axios from 'axios';
+import { ShopContext } from '../context/ShopContext';
+import { toast } from 'react-toastify';
 
 const Login = () => {
-  const [currentState, setCurrentState] = useState('Sign Up');
+  const [currentState, setCurrentState] = useState('Login');
+  const {token , setToken , navigate , backendUrl} = useContext(ShopContext);
 
-  const handleSubmit = (e) => {
+  const [name , setName] = useState('');
+  const [password , setPassword] = useState('');
+  const [email , setEmail] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      if(currentState === 'Sign Up'){
+        const res = await axios.post(backendUrl + '/api/user/register' , {name , email , password});
+        if(res.data.success){
+          setToken(res.data.token);
+          localStorage.setItem('token' , res.data.token)
+        }
+        else{
+          toast.error(res.data.message)
+        }
+      }else{
+        const res = await axios.post(backendUrl + '/api/user/login' , {email , password});
+        if(res.data.success){
+          setToken(res.data.token);
+          localStorage.setItem('token' , res.data.token)
+        }
+        else{
+          toast.error(res.data.message)
+        }
+      }
+      
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message);
+    }
   };
+
+  useEffect(() => {
+    if(token){
+      navigate('/');
+    }
+  } , [token])
 
   return (
     <div className='flex items-center justify-center min-h-screen bg-black px-4'>
@@ -21,6 +60,7 @@ const Login = () => {
         {currentState === 'Login' ? null : (
           <input
             type='text'
+            onChange={(e) => setName(e.target.value)}
             placeholder='Name'
             className='w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black'
             required
@@ -28,12 +68,14 @@ const Login = () => {
         )}
         <input
           type='email'
+          onChange={(e) => setEmail(e.target.value)}
           placeholder='Email'
           className='w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black'
           required
         />
         <input
           type='password'
+          onChange={(e) => setPassword(e.target.value)}
           placeholder='Password'
           className='w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black'
           required
