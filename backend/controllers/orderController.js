@@ -41,7 +41,15 @@ const placeOrderRazorpay = async (req, res) => {};
 
 //Get All Orders For Admin
 
-const allOrders = async (req, res) => {};
+const allOrders = async (req, res) => {
+  try {
+    const allOrders = await Order.find({});
+    res.json({success : true , allOrders});
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
 
 // User Order Data
 

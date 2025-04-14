@@ -60,10 +60,10 @@ const Orders = () => {
     // Seller's Details
     doc.setTextColor(33, 33, 33); // White text color
     doc.text('Seller:', 60, 20);
-    doc.text('Your Company Name', 60, 30);
-    doc.text('Your Company Address', 60, 40);
+    doc.text('3XIZ GUITARS', 60, 30);
+    doc.text('YAMUNA NAGAR', 60, 40);
     doc.text('Phone: +123 456 7890', 60, 50);
-    doc.text('Email: contact@yourcompany.com', 60, 60);
+    doc.text('Email: 3xizguitars@gmail.com', 60, 60);
   
     // Receipt Information
     doc.setFontSize(14);
