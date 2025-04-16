@@ -1,8 +1,9 @@
 import React from 'react'
+import YouTubeReviews from '../components/YoutubeReview'
 
 const Reviews = () => {
   return (
-    <div>Reviews</div>
+    <YouTubeReviews/>
   )
 }
 
