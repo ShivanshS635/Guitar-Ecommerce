@@ -9,7 +9,7 @@ const YouTubeReviews = () => {
   const [link, setLink] = useState('');
   const [reviews, setReviews] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [videoUrl, setVideoUrl] = useState(''); // to store the clicked video URL
+  const [videoUrl, setVideoUrl] = useState('');
 
   const fetchReviews = async () => {
     try {
@@ -21,11 +21,8 @@ const YouTubeReviews = () => {
   };
 
   const extractYouTubeId = (url) => {
-    if (!url || typeof url !== 'string') {
-      return url;
-    }
     const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/;
-    const match = url.match(regex);
+    const match = url?.match(regex);
     return match ? match[1] : null;
   };
 
@@ -35,7 +32,11 @@ const YouTubeReviews = () => {
     if (!videoId) return toast.error('Invalid YouTube link.');
 
     try {
-      const res = await axios.post('http://localhost:4000/api/reviews/submit', { videoUrl: link }, { headers: { token } });
+      const res = await axios.post(
+        'http://localhost:4000/api/reviews/submit',
+        { videoUrl: link },
+        { headers: { token } }
+      );
       if (res.data.success) {
         toast.success('Review submitted!');
         setLink('');
@@ -50,17 +51,17 @@ const YouTubeReviews = () => {
   };
 
   const openModal = (url) => {
-    setVideoUrl(url); // Set the URL of the clicked video
-    setIsModalOpen(true); // Open the modal
+    setVideoUrl(url);
+    setIsModalOpen(true);
   };
 
   const closeModal = () => {
-    setIsModalOpen(false); // Close the modal
+    setIsModalOpen(false);
   };
 
   const scroll = (direction) => {
     const container = document.getElementById('review-container');
-    const scrollAmount = direction === 'next' ? 500 : -500;
+    const scrollAmount = direction === 'next' ? 400 : -400;
     container.scrollLeft += scrollAmount;
   };
 
@@ -74,7 +75,6 @@ const YouTubeReviews = () => {
         <Title text1="YOUTUBE " text2="REVIEWS" />
       </div>
 
-      {/* Form */}
       <form
         onSubmit={handleSubmit}
         className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto mb-10"
@@ -95,37 +95,36 @@ const YouTubeReviews = () => {
         </button>
       </form>
 
-      {/* Thumbnails with horizontal scroll */}
       <div className="relative">
+        {/* Scroll Buttons */}
         <button
           onClick={() => scroll('prev')}
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 text-yellow-500 text-3xl bg-black rounded-full p-2 z-10 hover:bg-black"
+          className="hidden sm:flex absolute top-1/2 left-0 transform -translate-y-1/2 z-10 bg-black/60 hover:bg-black text-yellow-400 text-2xl rounded-full p-2"
         >
-          &lt;
+          ‹
         </button>
 
         <div
           id="review-container"
-          className="flex gap-6 overflow-x-auto scroll-smooth py-4"
-          style={{ scrollBehavior: 'smooth' }}
+          className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory py-4 px-2"
         >
           {reviews.map((review, i) => {
             const videoId = extractYouTubeId(review.videoUrl);
             return (
               <div
                 key={i}
-                className="flex-none w-1/3 sm:w-1/4 md:w-1/4 lg:w-1/4 xl:w-1/4 p-2"
+                className="snap-start flex-none w-[220px] sm:w-[240px] md:w-[260px]"
               >
                 <div
-                  className="bg-[#1b1b1b] rounded-lg overflow-hidden border border-white/10 shadow hover:shadow-lg transition cursor-pointer"
-                  onClick={() => openModal(review.videoUrl)} // Open modal on thumbnail click
+                  className="bg-[#1b1b1b] rounded-lg overflow-hidden border border-white/10 shadow hover:shadow-yellow-500/30 transition cursor-pointer"
+                  onClick={() => openModal(review.videoUrl)}
                 >
                   <img
                     src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
                     alt="YouTube Thumbnail"
-                    className="w-full h-48 object-cover"
+                    className="w-full h-40 sm:h-48 object-cover"
                   />
-                  <div className="p-4 text-sm text-yellow-200">
+                  <div className="p-3 text-sm text-yellow-200">
                     Review by: {review.userName || 'Anonymous'}
                   </div>
                 </div>
@@ -136,21 +135,21 @@ const YouTubeReviews = () => {
 
         <button
           onClick={() => scroll('next')}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 text-yellow-500 text-3xl bg-black rounded-full p-2 z-10 hover:bg-black"
+          className="hidden sm:flex absolute top-1/2 right-0 transform -translate-y-1/2 z-10 bg-black/60 hover:bg-black text-yellow-400 text-2xl rounded-full p-2"
         >
-          &gt;
+          ›
         </button>
       </div>
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black opacity-100 flex justify-center items-center z-50">
-          <div className="bg-[#121212] p-4 rounded-lg w-full sm:w-3/4 lg:w-2/3 opacity-100">
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50 px-4">
+          <div className="relative w-full max-w-3xl bg-[#121212] rounded-lg overflow-hidden">
             <button
               onClick={closeModal}
-              className="absolute top-4 right-4 text-white text-xl font-bold"
+              className="absolute top-2 right-4 text-white text-2xl font-bold z-10"
             >
-              &times;
+              ×
             </button>
             <iframe
               width="100%"
@@ -160,6 +159,7 @@ const YouTubeReviews = () => {
               frameBorder="0"
               allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              className="rounded-b-lg"
             ></iframe>
           </div>
         </div>
