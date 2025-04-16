@@ -2,10 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import Title from '../components/Title';
 import { toast } from 'react-toastify';
-import {ShopContext} from '../context/ShopContext.jsx'
+import { ShopContext } from '../context/ShopContext.jsx';
 
 const YouTubeReviews = () => {
-    const {token} = useContext(ShopContext);
+  const { token } = useContext(ShopContext);
   const [link, setLink] = useState('');
   const [reviews, setReviews] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,9 +33,9 @@ const YouTubeReviews = () => {
     e.preventDefault();
     const videoId = extractYouTubeId(link);
     if (!videoId) return toast.error('Invalid YouTube link.');
-  
+
     try {
-      const res = await axios.post('http://localhost:4000/api/reviews/submit', { videoUrl: link } , {headers : {token}});
+      const res = await axios.post('http://localhost:4000/api/reviews/submit', { videoUrl: link }, { headers: { token } });
       if (res.data.success) {
         toast.success('Review submitted!');
         setLink('');
@@ -56,6 +56,12 @@ const YouTubeReviews = () => {
 
   const closeModal = () => {
     setIsModalOpen(false); // Close the modal
+  };
+
+  const scroll = (direction) => {
+    const container = document.getElementById('review-container');
+    const scrollAmount = direction === 'next' ? 500 : -500;
+    container.scrollLeft += scrollAmount;
   };
 
   useEffect(() => {
@@ -89,52 +95,75 @@ const YouTubeReviews = () => {
         </button>
       </form>
 
-      {/* Thumbnails */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {reviews.map((review, i) => {
-            console.log(review)
-          const videoId = extractYouTubeId(review.videoUrl);
-          return (
-            <div
-              key={i}
-              className="bg-[#1b1b1b] rounded-lg overflow-hidden border border-white/10 shadow hover:shadow-lg transition cursor-pointer"
-              onClick={() => openModal(review.videoUrl)} // Open modal on thumbnail click
-            >
-              <img
-                src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-                alt="YouTube Thumbnail"
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4 text-sm text-yellow-200">
-                Review by: {review.userName || 'Anonymous'}
+      {/* Thumbnails with horizontal scroll */}
+      <div className="relative">
+        <button
+          onClick={() => scroll('prev')}
+          className="absolute top-1/2 left-4 transform -translate-y-1/2 text-yellow-500 text-3xl bg-black rounded-full p-2 z-10 hover:bg-black"
+        >
+          &lt;
+        </button>
+
+        <div
+          id="review-container"
+          className="flex gap-6 overflow-x-auto scroll-smooth py-4"
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          {reviews.map((review, i) => {
+            const videoId = extractYouTubeId(review.videoUrl);
+            return (
+              <div
+                key={i}
+                className="flex-none w-1/3 sm:w-1/4 md:w-1/4 lg:w-1/4 xl:w-1/4 p-2"
+              >
+                <div
+                  className="bg-[#1b1b1b] rounded-lg overflow-hidden border border-white/10 shadow hover:shadow-lg transition cursor-pointer"
+                  onClick={() => openModal(review.videoUrl)} // Open modal on thumbnail click
+                >
+                  <img
+                    src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                    alt="YouTube Thumbnail"
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-4 text-sm text-yellow-200">
+                    Review by: {review.userName || 'Anonymous'}
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => scroll('next')}
+          className="absolute top-1/2 right-4 transform -translate-y-1/2 text-yellow-500 text-3xl bg-black rounded-full p-2 z-10 hover:bg-black"
+        >
+          &gt;
+        </button>
       </div>
-        {/* Modal */}
-        {isModalOpen && (
-        <div className="fixed inset-0 bg-black opacity-100 flex justify-center items-center z-50"> {/* Overlay with less opacity */}
-            <div className="bg-[#121212] p-4 rounded-lg w-full sm:w-3/4 lg:w-2/3 opacity-100"> {/* Video player with full opacity */}
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black opacity-100 flex justify-center items-center z-50">
+          <div className="bg-[#121212] p-4 rounded-lg w-full sm:w-3/4 lg:w-2/3 opacity-100">
             <button
-                onClick={closeModal}
-                className="absolute top-4 right-4 text-white text-xl font-bold"
+              onClick={closeModal}
+              className="absolute top-4 right-4 text-white text-xl font-bold"
             >
-                &times;
+              &times;
             </button>
             <iframe
-                width="100%"
-                height="400"
-                src={`https://www.youtube.com/embed/${extractYouTubeId(videoUrl)}`}
-                title="YouTube video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+              width="100%"
+              height="400"
+              src={`https://www.youtube.com/embed/${extractYouTubeId(videoUrl)}`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             ></iframe>
-            </div>
+          </div>
         </div>
-        )}
-
+      )}
     </div>
   );
 };
