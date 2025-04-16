@@ -51,10 +51,37 @@ const placeOrderPaypal = async (req, res) => {
     const newOrder = new Order(orderData);
     await newOrder.save();
 
-    // Clear user cart
     await User.findByIdAndUpdate(userId, { cartData: {} });
 
     res.json({ success: true, message: "PayPal Order Placed" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+//Placing Order Using GooglePay
+
+const placeOrderGpay = async (req, res) => {
+  try {
+    const { items, amount, address } = req.body;
+    const { userId } = req.user;
+
+    const orderData = {
+      userId,
+      items,
+      address,
+      amount,
+      paymentMethod: 'gpay',
+      payment: true,
+      date: Date.now(),
+    };
+
+    const newOrder = new Order(orderData);
+    await newOrder.save();
+    await User.findByIdAndUpdate(userId, { cartData: {} });
+
+    res.json({ success: true, message: 'Google Pay Order Placed' });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
@@ -97,6 +124,7 @@ const updateStatus = async (req, res) => {};
 export {
   placeOrder,
   placeOrderPaypal,
+  placeOrderGpay,
   allOrders,
   userOrders,
   updateStatus,

@@ -23,8 +23,10 @@ import about from './img1.jpg';
 import contact from './contact.png'
 import empty_cart from './empty_cart.png'
 import checkIcon from './checkIcon.png'
+import gpay from './gpay.png'
 
 export const assets = {
+    gpay : gpay,
     hero: hero,
     logo: logo,
     profileLogo: profilelogo,
