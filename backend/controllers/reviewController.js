@@ -1,5 +1,7 @@
 import Review from '../models/reviewModel.js';
 import User from '../models/userModel.js';
+import { v2 as cloudinary } from 'cloudinary';
+import Screenshot from '../models/screenshotModel.js'
 
 const extractYouTubeId = (url) => {
   const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/;
@@ -57,5 +59,43 @@ export const getAllReviews = async (req, res) => {
     res.json({ success: true, reviews: reviewsWithUserNames });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const uploadScreenshot = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const file = req.files?.image;
+
+    if (!file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const uploaded = await cloudinary.uploader.upload(file.tempFilePath, {
+      folder: 'review_screenshots',
+    });
+
+    const newScreenshot = new Screenshot({
+      userId,
+      imageUrl: uploaded.secure_url,
+      uploadedAt: Date.now(),
+    });
+    
+    await newScreenshot.save();
+
+
+    res.json({ success: true, message: 'Screenshot uploaded', screenshot: newScreenshot });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getScreenshots = async (req, res) => {
+  try {
+    const screenshots = await Screenshot.find().sort({ uploadedAt: -1 });
+    res.json({ success: true, screenshots });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };

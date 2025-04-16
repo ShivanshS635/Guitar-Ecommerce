@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { ShopContext } from '../context/ShopContext.jsx';
 
 const YouTubeReviews = () => {
-  const { token } = useContext(ShopContext);
+  const { token , backendUrl} = useContext(ShopContext);
   const [link, setLink] = useState('');
   const [reviews, setReviews] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,7 +13,7 @@ const YouTubeReviews = () => {
 
   const fetchReviews = async () => {
     try {
-      const res = await axios.get('http://localhost:4000/api/reviews/all');
+      const res = await axios.get(backendUrl + '/api/reviews/all');
       setReviews(res.data.reviews || []);
     } catch (err) {
       console.error(err);
@@ -33,7 +33,7 @@ const YouTubeReviews = () => {
 
     try {
       const res = await axios.post(
-        'http://localhost:4000/api/reviews/submit',
+        backendUrl + '/api/reviews/submit',
         { videoUrl: link },
         { headers: { token } }
       );
