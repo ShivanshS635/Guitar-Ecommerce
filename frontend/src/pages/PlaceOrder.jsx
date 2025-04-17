@@ -33,6 +33,20 @@ const PlaceOrder = () => {
   const paypalRef = useRef();
   const gpayRef = useRef();
 
+  const isFormValid = () => {
+    return (
+      formData.firstName &&
+      formData.lastName &&
+      formData.email &&
+      formData.street &&
+      formData.city &&
+      formData.state &&
+      formData.zipcode &&
+      formData.country &&
+      formData.phone
+    );
+  };
+  
 
   const onChangeHandler = (e) => {
     const { name, value } = e.target;
@@ -84,6 +98,10 @@ const PlaceOrder = () => {
 
   useEffect(() => {
     if (method === 'paypal' && window.paypal && paypalRef.current) {
+      if (!isFormValid()) {
+        toast.error('Please fill in all the delivery information before proceeding with PayPal payment.');
+        return;
+      }
       window.paypal.Buttons({
         createOrder: (data, actions) => {
           return actions.order.create({
@@ -120,9 +138,7 @@ const PlaceOrder = () => {
               paymentResult,
             };
 
-            const res = await axios.post(`${backendUrl}/api/order/paypal`, orderData, {
-              headers: { token },
-            });
+            const res = await axios.post(`${backendUrl}/api/order/paypal`, orderData, {headers:{ Authorization: `Bearer ${token}`}});
 
             if (res.data.success) {
               setCartItems({});
@@ -145,7 +161,7 @@ const PlaceOrder = () => {
         },
       }).render(paypalRef.current);
     }
-  }, [method]);
+  }, [method, formData]);
 
   useEffect(() => {
     try {

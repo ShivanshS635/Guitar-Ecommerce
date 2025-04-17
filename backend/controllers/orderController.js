@@ -31,12 +31,10 @@ const placeOrder = async (req, res) => {
   }
 };
 
-//Placing Order Using Paypal
-
 const placeOrderPaypal = async (req, res) => {
   try {
     const { items, amount, address } = req.body;
-    const { userId } = req.user;
+    const userId = req.user?.userId;
 
     const orderData = {
       userId,
