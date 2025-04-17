@@ -121,7 +121,7 @@ import product14 from './PRODUCT_14.jpg';
 import product15 from './PRODUCT_15.jpg';
 import product16 from './PRODUCT_16.jpg';
 import product17 from './PRODUCT_17.jpg';
-import product18 from './PRODUCT_18.jpEg';
+import product18 from './PRODUCT_18.jpeg';
 
 export const products = [
     {
