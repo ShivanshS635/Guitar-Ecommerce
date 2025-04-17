@@ -13,7 +13,7 @@ const Orders = () => {
     try {
       if (!token) return null;
 
-      const res = await axios.post(backendUrl + '/api/order/userOrders', {}, { headers: { token } });
+      const res = await axios.post(backendUrl + '/api/order/userOrders', {}, { headers: { Authorization: `Bearer ${token}`} });
       setOrderData(res.data.orders); // Update order data
     } catch (error) {
       console.log(error);

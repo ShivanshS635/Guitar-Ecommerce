@@ -62,8 +62,8 @@ const PlaceOrder = () => {
       };
 
       if (method === 'cod') {
-        const res = await axios.post(`${backendUrl}/api/order/place`, orderData, {
-          headers: { token },
+        const res = await axios.post(`${backendUrl}/api/order/place`, orderData, 
+          { headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.data.success) {
@@ -82,7 +82,6 @@ const PlaceOrder = () => {
     }
   };
 
-  //paypal
   useEffect(() => {
     if (method === 'paypal' && window.paypal && paypalRef.current) {
       window.paypal.Buttons({
@@ -148,7 +147,6 @@ const PlaceOrder = () => {
     }
   }, [method]);
 
-  //gpay
   useEffect(() => {
     try {
       if (method === 'gpay' && window.google && gpayRef.current) {

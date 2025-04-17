@@ -5,7 +5,7 @@ import User from "../models/userModel.js";
 const placeOrder = async (req, res) => {
   try {
     const { items, amount, address } = req.body;
-    const { userId } = req.user;
+    const userId = req.user?.userId;
 
     console.log(userId);
 
