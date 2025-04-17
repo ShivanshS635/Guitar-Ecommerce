@@ -9,7 +9,7 @@ const About = () => {
 
   return (
     <div className="bg-neutral-900 text-neutral-300 px-4 sm:px-10 md:px-16 lg:px-24 py-10 space-y-24">
-      
+
       {/* Title */}
       <div className="pt-4 border-t border-neutral-700" data-aos="fade-down">
         <Title
@@ -47,9 +47,24 @@ const About = () => {
         </div>
       </div>
 
+      {/* Man Behind Section */}
+      <div className="space-y-6" data-aos="fade-up">
+        <h3 className="text-yellow-400 text-2xl font-semibold">Man Behind 3xiz Guitars</h3>
+        <p>
+          Our facility is equipped with the most high-quality measuring tools and the latest machinery, whether it's a screwdriver or a CNC. In such a production facility, every operation needs a smart brain to run smoothly while maintaining high standards. 
+          <strong>Parag Prajapati</strong> is the main brain behind 3xiz Guitars—running & monitoring all projects and consistently maintaining the quality to deliver the best to the music community.
+        </p>
+        <p>
+          Parag is a well-qualified mechanical engineer and CAD/CAM designer with top-tier design and programming skills in <strong>Fusion 360 & Solidworks</strong>. Hailing from <strong>Haryana</strong>, a state known for its timber and wood trade, Parag’s musical journey began back in 2011 when he joined his college band as a rhythm guitarist.
+        </p>
+        <p>
+          This blend of technical knowledge and musical passion gave birth to <strong>3xiz Guitars</strong> in 2017. Since then, he has upheld the brand’s high standards. Parag doesn't just carve necks and bodies; he brings designs to life—from simple forms to intricate creations with complex shapes, curves, and bends—thanks to his deep expertise in professional design software.
+        </p>
+      </div>
+
       {/* Stats Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 text-center gap-6 text-yellow-300" data-aos="zoom-in">
-        {[
+        {[ 
           { label: 'Projects Delivered', value: '500+' },
           { label: 'Experience', value: '7+ Yrs' },
           { label: 'Client Satisfaction', value: '99%' },
@@ -72,7 +87,7 @@ const About = () => {
           />
         </div>
         <div className="grid md:grid-cols-2 gap-8" data-aos="fade-up">
-          {[
+          {[ 
             { icon: <FaTools />, title: 'Precision Engineering', text: 'CNC machining meets artistry. Every cut matters.' },
             { icon: <FaAward />, title: 'Top-Notch Materials', text: 'Handpicked woods from trusted sources.' },
             { icon: <FaGuitar />, title: 'Musician’s Vision', text: 'We know guitars. Built by players, for players.' },
