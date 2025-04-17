@@ -24,6 +24,7 @@ const App = () => {
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });
+    AOS.refresh();
   }, []);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ const App = () => {
         <Suspense fallback={
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-yellow-400"></div>
+            <p className="ml-4">Loading...</p>
           </div>
         }>
           <Routes>
@@ -53,7 +55,10 @@ const App = () => {
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="*" element={
-              <div className="text-center py-20 text-red-400 text-xl">404 | Page Not Found</div>
+              <div className="text-center py-20 text-red-400 text-xl">
+                <p>404 | Page Not Found</p>
+                <a href="/" className="text-blue-400 underline">Go back to Home</a>
+              </div>
             } />
           </Routes>
         </Suspense>

@@ -1,166 +1,116 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import axios from 'axios';
-import Title from '../components/Title';
-import { toast } from 'react-toastify';
-import { ShopContext } from '../context/ShopContext.jsx';
+import { ShopContext } from '../context/ShopContext';
+import { ChevronLeft, ChevronRight, PlayCircle, X } from 'lucide-react';
 
-const YouTubeReviews = () => {
-  const { token , backendUrl} = useContext(ShopContext);
-  const [link, setLink] = useState('');
+const YouTubeReview = () => {
   const [reviews, setReviews] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [videoUrl, setVideoUrl] = useState('');
-
-  const fetchReviews = async () => {
-    try {
-      const res = await axios.get(backendUrl + '/api/reviews/all');
-      setReviews(res.data.reviews || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const extractYouTubeId = (url) => {
-    const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/;
-    const match = url?.match(regex);
-    return match ? match[1] : null;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const videoId = extractYouTubeId(link);
-    if (!videoId) return toast.error('Invalid YouTube link.');
-
-    try {
-      const res = await axios.post(
-        backendUrl + '/api/reviews/submit',
-        { videoUrl: link },
-        { headers: { token } }
-      );
-      if (res.data.success) {
-        toast.success('Review submitted!');
-        setLink('');
-        fetchReviews();
-      } else {
-        toast.error(res.data.message);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to submit review.');
-    }
-  };
-
-  const openModal = (url) => {
-    setVideoUrl(url);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const scroll = (direction) => {
-    const container = document.getElementById('review-container');
-    const scrollAmount = direction === 'next' ? 400 : -400;
-    container.scrollLeft += scrollAmount;
-  };
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [canScroll, setCanScroll] = useState(false);
+  const { backendUrl } = useContext(ShopContext);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(`${backendUrl}/api/reviews/all`);
+        setReviews(res.data.reviews || []);
+      } catch (error) {
+        console.error('Error fetching YouTube reviews:', error);
+      }
+    };
+
     fetchReviews();
   }, []);
 
-  return (
-    <div className="min-h-[80vh] border-t pt-10 px-4 sm:px-8 lg:px-16 bg-[#121212] text-yellow-100">
-      <div className="text-2xl sm:text-3xl mb-6 text-center">
-        <Title text1="YOUTUBE " text2="REVIEWS" />
-      </div>
+  useEffect(() => {
+    const checkScroll = () => {
+      const el = scrollRef.current;
+      if (el) setCanScroll(el.scrollWidth > el.clientWidth);
+    };
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto mb-10"
-      >
-        <input
-          type="url"
-          required
-          placeholder="Enter YouTube video link"
-          value={link}
-          onChange={(e) => setLink(e.target.value)}
-          className="flex-1 px-4 py-2 rounded-md text-black bg-white placeholder-gray-500 shadow"
-        />
-        <button
-          type="submit"
-          className="bg-yellow-500 text-black px-6 py-2 rounded-md hover:bg-yellow-400 transition"
-        >
-          Submit
-        </button>
-      </form>
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [reviews]);
+
+  const scroll = (direction) => {
+    const scrollAmount = 400;
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  return (
+    <div className="mb-12 mt-12">
+      <h3 className="text-xl sm:text-2xl font-semibold text-center mb-6 text-yellow-100">
+        YouTube Video Reviews
+      </h3>
 
       <div className="relative">
-        {/* Scroll Buttons */}
-        <button
-          onClick={() => scroll('prev')}
-          className="hidden sm:flex absolute top-1/2 left-0 transform -translate-y-1/2 z-10 bg-black/60 hover:bg-black text-yellow-400 text-2xl rounded-full p-2"
-        >
-          ‹
-        </button>
+        {canScroll && (
+          <>
+            <button
+              onClick={() => scroll('left')}
+              className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 bg-yellow-500 hover:bg-yellow-400 text-black p-2 rounded-full z-10 shadow"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 bg-yellow-500 hover:bg-yellow-400 text-black p-2 rounded-full z-10 shadow"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </>
+        )}
 
-        <div
-          id="review-container"
-          className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory py-4 px-2"
-        >
-          {reviews.map((review, i) => {
-            const videoId = extractYouTubeId(review.videoUrl);
-            return (
+        {/* Scroll Container */}
+        <div ref={scrollRef} className="overflow-x-auto scrollbar-hide px-8">
+          <div className="flex gap-6 w-max">
+            {reviews.map((review, index) => (
               <div
-                key={i}
-                className="snap-start flex-none w-[220px] sm:w-[240px] md:w-[260px]"
+                key={index}
+                onClick={() => setSelectedVideo(review.videoId)}
+                className="group relative block rounded-xl overflow-hidden shadow-lg border border-white/10 min-w-[300px] sm:min-w-[340px] md:min-w-[400px] hover:scale-105 transition-transform cursor-pointer"
               >
-                <div
-                  className="bg-[#1b1b1b] rounded-lg overflow-hidden border border-white/10 shadow hover:shadow-yellow-500/30 transition cursor-pointer"
-                  onClick={() => openModal(review.videoUrl)}
-                >
-                  <img
-                    src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-                    alt="YouTube Thumbnail"
-                    className="w-full h-40 sm:h-48 object-cover"
-                  />
-                  <div className="p-3 text-sm text-yellow-200">
-                    Review by: {review.userName || 'Anonymous'}
-                  </div>
+                <img
+                  src={`https://img.youtube.com/vi/${review.videoId}/hqdefault.jpg`}
+                  alt={`Review Thumbnail ${index}`}
+                  className="w-full h-56 object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition">
+                  <PlayCircle className="text-white w-12 h-12 mb-2" />
+                  <p className="text-white text-center text-sm font-medium px-2">
+                    {review.title || 'YouTube Review'}
+                  </p>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
-
-        <button
-          onClick={() => scroll('next')}
-          className="hidden sm:flex absolute top-1/2 right-0 transform -translate-y-1/2 z-10 bg-black/60 hover:bg-black text-yellow-400 text-2xl rounded-full p-2"
-        >
-          ›
-        </button>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50 px-4">
-          <div className="relative w-full max-w-3xl bg-[#121212] rounded-lg overflow-hidden">
-            <button
-              onClick={closeModal}
-              className="absolute top-2 right-4 text-white text-2xl font-bold z-10"
-            >
-              ×
-            </button>
+      {/* Modal Player */}
+      {selectedVideo && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="relative w-[90%] max-w-3xl aspect-video">
             <iframe
-              width="100%"
-              height="400"
-              src={`https://www.youtube.com/embed/${extractYouTubeId(videoUrl)}`}
+              src={`https://www.youtube.com/embed/${selectedVideo}?autoplay=1`}
               title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              className="rounded-b-lg"
+              className="w-full h-full rounded-xl shadow-lg"
             ></iframe>
+            <button
+              onClick={() => setSelectedVideo(null)}
+              className="absolute -top-4 -right-4 bg-yellow-500 text-black p-2 rounded-full shadow hover:bg-yellow-400"
+            >
+              <X />
+            </button>
           </div>
         </div>
       )}
@@ -168,4 +118,4 @@ const YouTubeReviews = () => {
   );
 };
 
-export default YouTubeReviews;
+export default YouTubeReview;
