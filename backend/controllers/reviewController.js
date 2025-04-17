@@ -1,7 +1,7 @@
 import Review from '../models/reviewModel.js';
-import User from '../models/userModel.js';
+import Youtube from '../models/youtubeModel.js'
 import { v2 as cloudinary } from 'cloudinary';
-import Screenshot from '../models/screenshotModel.js'
+import Screenshot from '../models/screenshotModel.js';
 
 const extractYouTubeId = (url) => {
   const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/;
@@ -18,25 +18,64 @@ export const submitReview = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid YouTube URL.' });
     }
 
-    const review = new Review({ videoUrl, videoId });
-    await review.save();
+    const youtube = new Youtube({ videoUrl, videoId });
+    await youtube.save();
 
-    res.json({ success: true, message: 'Review submitted.', review });
+    res.json({ success: true, message: 'Review submitted.', youtube });
   } catch (error) {
     console.error('Error in submitReview:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
+export const submitTextReview = async (req, res) => {
+  try {
+    const { description, rating } = req.body;
+    const userId = req.user?.userId; // Optional chaining to safely access
+
+    console.log("Review Submission:", description, rating, userId);
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
+    if (!description || !rating) {
+      return res.status(400).json({ success: false, message: 'Description and rating are required.' });
+    }
+
+    const review = new Review({ description, rating, user: userId });
+    await review.save();
+
+    res.json({ success: true, message: 'Text review submitted.', review });
+  } catch (error) {
+    console.error('Error in submitTextReview:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+export const getTextReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find()
+      .populate('user', 'name')  // Populate only the `name` field of the user
+      .sort({ submittedAt: -1 });
+
+    res.json({ success: true, reviews });
+  } catch (error) {
+    console.log('Error in getTextReviews:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 export const getAllReviews = async (req, res) => {
   try {
-    const reviews = await Review.find().sort({ submittedAt: -1 });
+    const reviews = await Youtube.find().sort({ submittedAt: -1 });
     res.json({ success: true, reviews });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const uploadScreenshot = async (req, res) => {
   try {
@@ -62,7 +101,6 @@ export const uploadScreenshot = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
 
 export const getScreenshots = async (req, res) => {
   try {

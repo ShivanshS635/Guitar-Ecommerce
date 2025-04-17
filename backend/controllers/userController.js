@@ -12,13 +12,13 @@ const loginUser = async (req, res) => {
     try {
         // Validate user credentials
         if (!email || !password) {
-        return res.josn({success: false , message: 'Please provide all required fields' });
+        return res.json({success: false , message: 'Please provide all required fields' });
         }
     
         // Check if user exists in the database
         const user = await User.findOne({ email });
         if (!user) {
-        return res.json({succes: false , message: 'Invalid email or password' });
+        return res.json({success: false , message: 'Invalid email or password' });
         }
 
         //unhash password
