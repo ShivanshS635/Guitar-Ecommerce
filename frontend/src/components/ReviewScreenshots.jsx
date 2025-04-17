@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import axios from 'axios';
 import { ShopContext } from '../context/ShopContext';
-import { motion } from 'framer-motion'; // For Modal animation
-import { X } from 'lucide-react'; // Close icon
+import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 const ReviewScreenshots = () => {
   const [screenshots, setScreenshots] = useState([]);
@@ -19,13 +19,12 @@ const ReviewScreenshots = () => {
         console.error('Error fetching review screenshots:', error);
       }
     };
-
     fetchScreenshots();
   }, []);
 
   const handleScroll = (direction) => {
     if (scrollRef.current) {
-      const scrollAmount = direction === 'next' ? 300 : -300; // adjust the scroll amount as needed
+      const scrollAmount = direction === 'next' ? 300 : -300;
       scrollRef.current.scrollBy({
         left: scrollAmount,
         behavior: 'smooth',
@@ -35,51 +34,50 @@ const ReviewScreenshots = () => {
 
   return (
     <div className="pt-12 px-4 sm:px-8 lg:px-16 text-yellow-100">
-      <h3 className="text-xl sm:text-2xl font-semibold text-center mb-6">Customer Review Screenshots</h3>
+      <h3 className="text-xl sm:text-2xl font-semibold text-center mb-6">
+        Customer Review Screenshots
+      </h3>
 
-      {/* Horizontal Scrolling Container */}
       <div className="relative">
-        {/* Left Arrow Button */}
+        {/* Left Arrow */}
         <button
-          onClick={() => handleScroll('prev')}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-yellow-500 text-black p-2 rounded-full shadow-lg hover:bg-yellow-400"
-        >
-          &lt;
-        </button>
+              onClick={() => handleScroll('prev')}
+              className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 bg-yellow-500 hover:bg-yellow-400 text-black p-2 rounded-full z-10 shadow"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={() => handleScroll('next')}
+              className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 bg-yellow-500 hover:bg-yellow-400 text-black p-2 rounded-full z-10 shadow"
+            >
+              <ChevronRight size={24} />
+            </button>
 
-        {/* Right Arrow Button */}
-        <button
-          onClick={() => handleScroll('next')}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-yellow-500 text-black p-2 rounded-full shadow-lg hover:bg-yellow-400"
-        >
-          &gt;
-        </button>
-
-        {/* Horizontal Scrollable Images */}
+        {/* Scrollable Container */}
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto space-x-4 py-4 scroll-smooth"
+          className="flex overflow-x-auto gap-4 py-4 scroll-smooth px-1"
         >
           {screenshots.map((ss, index) => (
             <div
               key={index}
-              className="group relative overflow-hidden rounded-lg shadow-lg border border-white/10 cursor-pointer transform hover:scale-105 transition-all"
-              onClick={() => setSelectedImage(ss.imageUrl)} // Open image in modal on click
+              className="min-w-[90%] sm:min-w-[18rem] md:min-w-[22rem] lg:min-w-[26rem] max-w-full group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer"
+              onClick={() => setSelectedImage(ss.imageUrl)}
             >
               <img
                 src={ss.imageUrl}
                 alt={`Screenshot ${index}`}
-                className="w-48 h-48 object-cover rounded-lg transition-all group-hover:opacity-80"
+                className="w-full h-64 object-cover rounded-2xl transition-opacity duration-300 group-hover:opacity-80"
               />
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                <span className="text-white text-xl font-semibold">View Image</span>
+              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                <span className="text-white text-lg font-semibold">View Image</span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Modal for selected image */}
+      {/* Image Modal */}
       {selectedImage && (
         <motion.div
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
