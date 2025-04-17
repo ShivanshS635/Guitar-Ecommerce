@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import Title from '../components/Title';
 import axios from 'axios';
-import jsPDF from 'jspdf'; // Add jsPDF library to generate PDFs
+import jsPDF from 'jspdf';
 import { assets } from '../assets/assets';
 
 const Orders = () => {
@@ -14,7 +14,7 @@ const Orders = () => {
       if (!token) return null;
 
       const res = await axios.post(backendUrl + '/api/order/userOrders', {}, { headers: { Authorization: `Bearer ${token}`} });
-      setOrderData(res.data.orders); // Update order data
+      setOrderData(res.data.orders);
     } catch (error) {
       console.log(error);
     }
