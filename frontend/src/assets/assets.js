@@ -1,5 +1,5 @@
 import logo from './logo.png';
-import hero from './hero.jpg';
+import hero from './Hero.jpg';
 import workshop from './workshop.jpg'
 import profilelogo from './profile-logo.png';
 import cartlogo from './shopping-cart.png';
