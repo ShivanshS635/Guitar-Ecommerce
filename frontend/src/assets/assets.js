@@ -1,5 +1,6 @@
 import logo from './logo.png';
-import hero from './img2.jpg';
+import hero from './hero.jpg';
+import workshop from './workshop.jpg'
 import profilelogo from './profile-logo.png';
 import cartlogo from './shopping-cart.png';
 import menu from './menu.png';
@@ -16,6 +17,7 @@ import contact from './contact.png'
 import empty_cart from './empty_cart.png'
 import checkIcon from './checkIcon.png'
 import gpay from './gpay.png'
+import print from './3dprinting.jpg'
 
 import body1 from './BODY_1.jpg';
 import body2 from './BODY_2.jpg';
@@ -530,6 +532,20 @@ export const products = [
 ]
 
 export const assets = {
+    workshop : workshop,
+    print : print,
+    product1,
+    product10,
+    product11,
+    product13,
+    body12,
+    product12,
+    product2,
+    body19,
+    neck9,
+    body1 : body21,
+    neck1 : neck1,
+    inlay1 : inlay4,
     gpay : gpay,
     hero: hero,
     logo: logo,

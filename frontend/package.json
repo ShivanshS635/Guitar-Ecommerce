@@ -24,6 +24,7 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-parallax-tilt": "^1.7.291",
+    "react-player": "^2.16.0",
     "react-router-dom": "^7.4.1",
     "react-swipeable": "^7.0.2",
     "react-toastify": "^11.0.5",
