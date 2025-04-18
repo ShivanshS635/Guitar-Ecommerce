@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { assets } from '../../assets/assets';
+import Title from '../Title.jsx';
 
 const screenshots = [
     assets.product1,
@@ -58,10 +59,10 @@ const ScreenshotGallery = () => {
 
   return (
     <section className="bg-black py-16 px-6 text-white">
-      <h2 className="text-3xl text-yellow-400 font-bold mb-8 text-center">Customer Builds</h2>
+      <Title text1={'Customer '} text2={'Builds'}/>
       <div 
         ref={containerRef}
-        className="relative overflow-hidden"
+        className="relative overflow-hidden mt-10"
       >
         <style>{`
           @keyframes scroll {

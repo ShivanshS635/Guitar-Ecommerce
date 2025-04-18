@@ -79,7 +79,7 @@ const Collection = () => {
           <img
             src={assets.dropdown}
             alt="Toggle"
-            className={`h-5 sm:hidden transition-transform ${showFilter ? '' : '-rotate-90'}`}
+            className={`h-5 sm:hidden filter invert transition-transform ${showFilter ? '' : '-rotate-90'}`}
           />
         </p>
 

@@ -18,7 +18,6 @@ const Home = () => (
     <YouTubeReviews />
     <ScreenshotGallery />
     <Testimonials />
-    <ContactCTA />
   </>
 )
 
