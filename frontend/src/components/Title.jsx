@@ -1,12 +1,12 @@
 import React from 'react';
 
-const Title = ({ text1, text2, icon: Icon, subtitle }) => {
+const Title = ({ text1 = '', text2 = '', icon: Icon, subtitle = '' }) => {
   return (
     <div data-aos="fade-up" className="text-center space-y-2">
       <div className="flex justify-center items-center gap-2 text-yellow-400 text-3xl font-bold tracking-wide">
         {Icon && <Icon className="text-yellow-300 text-4xl" />}
         <span>{text1}</span>
-        <span className="text-white">{text2}</span>
+        {text2 && <span className="text-white">{text2}</span>}
       </div>
 
       <div className="flex justify-center">
