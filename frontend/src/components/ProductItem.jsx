@@ -1,12 +1,10 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-
 const ProductItem = ({ id, img, name, price, listView = false }) => {
-  const { currency } = useContext(ShopContext);
-    
+  const { formatPrice } = useContext(ShopContext);
 
   return (
     <motion.div
@@ -29,7 +27,6 @@ const ProductItem = ({ id, img, name, price, listView = false }) => {
             alt={name}
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
           />
-
           {!listView && (
             <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
               <p className="text-sm text-yellow-300 font-semibold bg-black/60 px-3 py-1 rounded-full">
@@ -42,12 +39,13 @@ const ProductItem = ({ id, img, name, price, listView = false }) => {
         {/* Details */}
         <div className="px-3 py-2 flex flex-col justify-center">
           <p className="text-sm text-yellow-200 line-clamp-2 h-[3em] leading-snug">{name}</p>
-          <p className="text-sm font-semibold text-yellow-400">{currency}{price}</p>
+          <p className="text-sm font-semibold text-yellow-400">
+            {formatPrice(price)}
+          </p>
         </div>
       </Link>
     </motion.div>
   );
 };
-
 
 export default ProductItem;

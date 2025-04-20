@@ -54,7 +54,7 @@ const Hero = () => {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
-        className="relative z-10 text-center w-full px-4 py-16 sm:py-24 lg:py-32"
+        className="relative text-center w-full px-4 py-16 sm:py-24 lg:py-32"
       >
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-yellow-400 drop-shadow-lg min-h-[4rem] sm:min-h-[5rem] md:min-h-[6rem] flex items-center justify-center">

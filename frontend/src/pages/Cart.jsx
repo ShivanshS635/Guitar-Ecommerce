@@ -5,7 +5,13 @@ import { assets } from '../assets/assets';
 import CartTotal from '../components/CartTotal';
 
 const Cart = () => {
-  const { products, cartItems, currency, updateQuantity, navigate } = useContext(ShopContext);
+  const { 
+    products, 
+    cartItems, 
+    updateQuantity, 
+    navigate,
+    formatPrice  // Added formatPrice from context
+  } = useContext(ShopContext);
   const [cartData, setCartData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +25,7 @@ const Cart = () => {
       setCartData(tempData);
       setTimeout(() => setLoading(false), 500);
     }
-  }, [cartItems , products]);
+  }, [cartItems, products]);
 
   return (
     <div className="border-t pt-14 px-4 sm:px-8 text-yellow-100 bg-gradient-to-br from-[#1b1b1b] via-[#121212] to-[#0d0d0d] min-h-screen">
@@ -35,7 +41,7 @@ const Cart = () => {
       ) : cartData.length === 0 ? (
         // Empty Cart Message
         <div className="flex flex-col items-center justify-center py-32 text-center text-yellow-200">
-          <img src={assets.empty_cart} alt="Empty Cart" className="bg-transparent  w-40 mb-6 opacity-80" />
+          <img src={assets.empty_cart} alt="Empty Cart" className="bg-transparent w-40 mb-6 opacity-80" />
           <h2 className="text-xl font-semibold">Your cart is empty</h2>
           <p className="text-sm text-yellow-400 mt-2">Start adding some products to see them here!</p>
           <button
@@ -51,6 +57,8 @@ const Cart = () => {
           <div className="space-y-4">
             {cartData.map((item, index) => {
               const product = products.find((product) => product._id === item._id);
+              if (!product) return null;
+              
               return (
                 <div
                   key={index}
@@ -60,18 +68,21 @@ const Cart = () => {
                     <img src={product.img[0]} alt={product.name} className="w-16 sm:w-20 rounded-md" />
                     <div className="flex flex-col gap-1">
                       <h1 className="text-sm sm:text-lg font-semibold">{product.name}</h1>
-                      <p className="text-yellow-400 text-sm">{currency}{product.price}</p>
+                      <p className="text-yellow-400 text-sm">
+                        {formatPrice(product.priceInINR)}  {/* Changed to use formatPrice */}
+                      </p>
                     </div>
                   </div>
                   <input
                     type="number"
                     min={1}
-                    defaultValue={item.quantity}
-                    onChange={(e) =>
-                      e.target.value === '0' || e.target.value === ''
-                        ? null
-                        : updateQuantity(item._id, Number(e.target.value))
-                    }
+                    value={item.quantity}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (value >= 1) {
+                        updateQuantity(item._id, value);
+                      }
+                    }}
                     className="bg-black border border-white/10 text-yellow-100 text-sm px-2 py-1 rounded w-16 text-center"
                   />
                   <img

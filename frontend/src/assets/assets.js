@@ -17,6 +17,7 @@ import contact from './contact.png'
 import empty_cart from './empty_cart.png'
 import checkIcon from './checkIcon.png'
 import gpay from './gpay.png'
+import close from './close.png'
 import print from './3dprinting.jpg'
 
 import body1 from './BODY_1.jpg';
@@ -532,6 +533,7 @@ export const products = [
 ]
 
 export const assets = {
+    close : close,
     workshop : workshop,
     print : print,
     product1,

@@ -33,11 +33,11 @@ const App = () => {
 
   return (
     <div className="bg-black min-h-screen text-white">
-      <div className="px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]">
+      <Navbar />
+      <div className="pt-16 bg-[#0d0d0d] min-h-screen">
         <ToastContainer />
-        <Navbar />
         <Suspense fallback={
-          <div className="flex justify-center items-center py-20">
+          <div className="flex justify-center items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-yellow-400"></div>
             <p className="ml-4">Loading...</p>
           </div>
