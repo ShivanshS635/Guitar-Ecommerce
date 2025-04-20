@@ -34,34 +34,36 @@ const App = () => {
   return (
     <div className="bg-black min-h-screen text-white">
       <Navbar />
-      <div className="pt-16 bg-[#0d0d0d] min-h-screen">
+      <div className="pt-26 bg-[#0d0d0d] min-h-screen">
         <ToastContainer />
-        <Suspense fallback={
-          <div className="flex justify-center items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-yellow-400"></div>
-            <p className="ml-4">Loading...</p>
-          </div>
-        }>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/collection" element={<Collection />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/product/:id" element={<Product />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/place-order" element={<PlaceOrder />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/reviews" element={<Reviews />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="*" element={
-              <div className="text-center py-20 text-red-400 text-xl">
-                <p>404 | Page Not Found</p>
-                <a href="/" className="text-blue-400 underline">Go back to Home</a>
-              </div>
-            } />
-          </Routes>
-        </Suspense>
+        <main className="max-w-[1440px] w-full mx-auto px-4">
+          <Suspense fallback={
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-yellow-400"></div>
+              <p className="ml-4">Loading...</p>
+            </div>
+          }>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/collection" element={<Collection />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/product/:id" element={<Product />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/place-order" element={<PlaceOrder />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/reviews" element={<Reviews />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="*" element={
+                <div className="text-center py-20 text-red-400 text-xl">
+                  <p>404 | Page Not Found</p>
+                  <a href="/" className="text-blue-400 underline">Go back to Home</a>
+                </div>
+              } />
+            </Routes>
+          </Suspense>
+        </main>
       </div>
       <Footer />
     </div>

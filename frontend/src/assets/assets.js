@@ -19,6 +19,7 @@ import checkIcon from './checkIcon.png'
 import gpay from './gpay.png'
 import close from './close.png'
 import print from './3dprinting.jpg'
+import filter from './filter.png'
 
 import body1 from './BODY_1.jpg';
 import body2 from './BODY_2.jpg';
@@ -533,6 +534,7 @@ export const products = [
 ]
 
 export const assets = {
+    filter : filter,
     close : close,
     workshop : workshop,
     print : print,
