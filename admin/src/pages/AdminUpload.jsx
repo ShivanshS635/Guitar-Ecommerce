@@ -15,7 +15,7 @@ const AdminUpload = ({ token }) => {
       const res = await axios.post(
         backendUrl + '/api/reviews/submit', 
         { videoUrl: youtubeUrl },
-        { headers: { token } }
+        { headers: { Authorization : `Bearer ${token}` } }
       );
 
       if (res.data.success) {
@@ -40,7 +40,7 @@ const AdminUpload = ({ token }) => {
       const res = await axios.post(
         backendUrl + '/api/reviews/upload-image', 
         formData,
-        { headers: { token, 'Content-Type': 'multipart/form-data' } }
+        { headers: { Authorization : `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
       );
 
       if (res.data.success) {

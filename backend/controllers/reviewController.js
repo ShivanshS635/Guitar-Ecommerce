@@ -4,10 +4,34 @@ import { v2 as cloudinary } from 'cloudinary';
 import Screenshot from '../models/screenshotModel.js';
 
 const extractYouTubeId = (url) => {
-  const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/;
-  const match = url.match(regex);
-  return match ? match[1] : null;
+  try {
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname;
+
+    if (hostname === 'youtu.be') {
+      return parsedUrl.pathname.slice(1);
+    }
+
+    if (hostname === 'www.youtube.com' || hostname === 'youtube.com') {
+      if (parsedUrl.pathname === '/watch') {
+        return parsedUrl.searchParams.get('v');
+      }
+
+      if (parsedUrl.pathname.startsWith('/embed/')) {
+        return parsedUrl.pathname.split('/embed/')[1];
+      }
+
+      if (parsedUrl.pathname.startsWith('/shorts/')) {
+        return parsedUrl.pathname.split('/shorts/')[1];
+      }
+    }
+
+    return null;
+  } catch (err) {
+    return null;
+  }
 };
+
 
 export const submitReview = async (req, res) => {
   try {

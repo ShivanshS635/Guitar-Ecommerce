@@ -37,7 +37,7 @@ const Add = ({token}) => {
         formData,
         {
           headers: {
-            token: token,
+            Authorization : `Bearer ${token}`
           },
         }
       );
