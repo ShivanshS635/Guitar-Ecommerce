@@ -1,5 +1,5 @@
 import express from 'express'
-import { placeOrder , placeOrderPaypal,placeOrderGpay , allOrders , updateStatus , userOrders } from '../controllers/orderController.js'
+import { placeOrder,placeOrderPhonePe , placeOrderPaypal,placeOrderGpay , allOrders , updateStatus , userOrders } from '../controllers/orderController.js'
 import adminAuth from '../middlewares/adminAuth.js'
 import authUser from '../middlewares/auth.js'
 
@@ -11,6 +11,7 @@ orderRouter.post('/status' , adminAuth , updateStatus);
 
 //PAYMENT FEATURES
 orderRouter.post('/place' , authUser , placeOrder);
+orderRouter.post('/phonepe' , authUser , placeOrderPhonePe);
 orderRouter.post('/paypal' , authUser , placeOrderPaypal);
 orderRouter.post('/gpay' , authUser , placeOrderGpay);
 

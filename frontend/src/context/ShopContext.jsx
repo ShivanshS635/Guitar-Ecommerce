@@ -21,7 +21,14 @@ const ShopContextProvider = (props) => {
   const fetchConversionRates = async () => {
     try {
       const res = await axios.get(
-        `https://api.exchangerate.host/latest?base=INR`
+        'https://api.exchangerate.host/latest?base=INR',
+        {
+          timeout: 5000, // 5 second timeout
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        }
       );
       if (res.data.success) {
         setCurrencyRates(res.data.rates);

@@ -19,6 +19,7 @@ import checkIcon from './checkIcon.png'
 import gpay from './gpay.png'
 import close from './close.png'
 import print from './3dprinting.jpg'
+import phonepe from './phonepe.png'
 import filter from './filter.png'
 
 import body1 from './BODY_1.jpg';
@@ -551,6 +552,7 @@ export const assets = {
     neck1 : neck1,
     inlay1 : inlay4,
     gpay : gpay,
+    phonepe : phonepe,
     hero: hero,
     logo: logo,
     profileLogo: profilelogo,

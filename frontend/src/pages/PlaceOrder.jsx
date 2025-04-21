@@ -31,7 +31,7 @@ const PlaceOrder = () => {
   const [method, setMethod] = useState('cod');
   const [showOverlay, setShowOverlay] = useState(false);
   const paypalRef = useRef();
-  const gpayRef = useRef();
+  const phonepeRef = useRef();
 
   const isFormValid = () => {
     return (
@@ -46,7 +46,6 @@ const PlaceOrder = () => {
       formData.phone
     );
   };
-  
 
   const onChangeHandler = (e) => {
     const { name, value } = e.target;
@@ -163,99 +162,22 @@ const PlaceOrder = () => {
     }
   }, [method, formData]);
 
-  useEffect(() => {
-    try {
-      if (method === 'gpay' && window.google && gpayRef.current) {
-        const paymentsClient = new window.google.payments.api.PaymentsClient({ environment: 'TEST' });
-    
-        const paymentRequest = {
-          apiVersion: 2,
-          apiVersionMinor: 0,
-          allowedPaymentMethods: [{
-            type: 'CARD',
-            parameters: {
-              allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-              allowedCardNetworks: ['MASTERCARD', 'VISA'],
-            },
-            tokenizationSpecification: {
-              type: 'PAYMENT_GATEWAY',
-              parameters: {
-                gateway: 'example', // Replace with your real gateway
-                gatewayMerchantId: 'exampleMerchantId',
-              },
-            },
-          }],
-          merchantInfo: {
-            merchantId: '5579157476',
-            merchantName: 'Your Guitar Shop',
-          },
-          transactionInfo: {
-            totalPriceStatus: 'FINAL',
-            totalPriceLabel: 'Total',
-            totalPrice: (getCartAmount() + deliveryCharges).toFixed(2),
-            currencyCode: 'USD',
-            countryCode: 'US',
-          },
-        };
-    
-        paymentsClient.isReadyToPay({ allowedPaymentMethods: paymentRequest.allowedPaymentMethods })
-          .then((response) => {
-            if (response.result) {
-              const button = paymentsClient.createButton({
-                onClick: () => {
-                  paymentsClient.loadPaymentData(paymentRequest)
-                    .then(async (paymentData) => {
-                      // Payment success, place order
-                      let orderItems = [];
-                      for (const itemId in cartItems) {
-                        const quantity = cartItems[itemId];
-                        const product = products.find((product) => product._id === itemId);
-                        if (product && quantity > 0) {
-                          const itemInfo = structuredClone(product);
-                          itemInfo.quantity = quantity;
-                          orderItems.push(itemInfo);
-                        }
-                      }
-    
-                      const orderData = {
-                        address: formData,
-                        items: orderItems,
-                        amount: getCartAmount() + deliveryCharges,
-                        date: Date.now(),
-                        paymentResult: paymentData,
-                      };
-    
-                      const res = await axios.post(`${backendUrl}/api/order/gpay`, orderData, {
-                        headers: { token },
-                      });
-    
-                      if (res.data.success) {
-                        setCartItems({});
-                        setShowOverlay(true);
-                        setTimeout(() => {
-                          setShowOverlay(false);
-                          navigate('/orders');
-                        }, 5000);
-                      } else {
-                        toast.error(res.data.message);
-                      }
-                    })
-                    .catch((err) => {
-                      toast.error('Google Pay failed');
-                      console.log(err);
-                    });
-                },
-              });
-              gpayRef.current.innerHTML = '';
-              gpayRef.current.appendChild(button);
-            }
-          });
-      }
-    } catch (error) {
-      console.log(error)
+      const phonepe = async () => {
+      axios.post(`${backendUrl}/api/order/phonepe`, { amount: getCartAmount() + deliveryCharges }, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        if (res.data.checkoutPageUrl) {
+          window.location.href = res.data.checkoutPageUrl; // Redirect to PhonePe's checkout URL
+        } else {
+          toast.error('PhonePe Payment initiation failed.');
+        }
+      })
+      .catch((err) => {
+        toast.error('PhonePe Payment initiation failed.');
+        console.log(err);
+      });
     }
-  }, [method]);
-  
 
   return (
     <>
@@ -289,22 +211,16 @@ const PlaceOrder = () => {
         {/* Cart & Payment */}
         <div className="flex flex-col w-full sm:max-w-[450px]">
           <CartTotal />
-
           <div className={`mt-12 ${cardStyle}`}>
             <Title text1={'PAYMENT '} text2={'METHOD'} />
             <div className="flex flex-col gap-4 mt-4">
-              {[
-                { key: 'Google Pay', logo: assets.gpay },
-                { key: 'paypal', logo: assets.paypal },
-                { key: 'razorpay', logo: assets.razorpay },
-                { key: 'cod', label: 'CASH ON DELIVERY' }
-              ].map((option) => (
+              {[{ key: 'paypal', logo: assets.paypal },
+                { key: 'phonepe', logo: assets.phonepe },
+                { key: 'cod', label: 'CASH ON DELIVERY' }].map((option) => (
                 <div
                   key={option.key}
                   onClick={() => setMethod(option.key)}
-                  className={`flex items-center gap-3 border p-3 rounded-md cursor-pointer transition duration-200 ${
-                    method === option.key ? 'border-green-400 bg-green-50' : 'hover:bg-gray-100'
-                  }`}
+                  className={`flex items-center gap-3 border p-3 rounded-md cursor-pointer transition duration-200 ${method === option.key ? 'border-green-400 bg-green-50' : 'hover:bg-gray-100'}`}
                 >
                   <p className={`min-w-4 h-4 border rounded-full ${method === option.key ? 'bg-green-500' : ''}`}></p>
                   {option.logo ? (
@@ -319,8 +235,13 @@ const PlaceOrder = () => {
             <div className="w-full text-end mt-8">
               {method === 'paypal' ? (
                 <div ref={paypalRef} />
-              ) : method === 'gpay' ? (
-                <div ref={gpayRef} />
+              ) : method === 'phonepe' ? (
+                <button
+                  onClick={() => {setMethod('phonepe');phonepe()}}
+                  className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-16 py-3 text-sm rounded-full hover:opacity-90 active:scale-95 transition-transform"
+                >
+                  PAY WITH PHONEPE
+                </button>
               ) : (
                 <button
                   type="submit"
@@ -330,7 +251,6 @@ const PlaceOrder = () => {
                 </button>
               )}
             </div>
-
           </div>
         </div>
       </form>

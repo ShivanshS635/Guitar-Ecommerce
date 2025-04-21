@@ -1,9 +1,10 @@
+
+import Product from '../models/productModel.js'
 import { v2 as cloudinary } from "cloudinary";
-import Product from "../models/productModel.js";
 import multer from 'multer';
 const upload = multer({ storage: multer.memoryStorage() });
 
-//function for add product
+// Function for add product
 const addProduct = async (req, res) => {
   try {
     const { name, description, price, category } = req.body;
@@ -44,7 +45,9 @@ const addProduct = async (req, res) => {
   }
 };
 
-//function for list products
+
+
+// Function for list products
 const listProducts = async (req, res) => {
   try {
     const products = await Product.find({});
@@ -55,7 +58,7 @@ const listProducts = async (req, res) => {
   }
 };
 
-//finction for remove product
+// Function for remove product
 const removeProduct = async (req, res) => {
   try {
     const { id } = req.body;
@@ -70,7 +73,7 @@ const removeProduct = async (req, res) => {
   }
 };
 
-//function for single product info
+// Function for single product info
 const singleProduct = async (req, res) => {
   try {
     const { id } = req.body;
@@ -85,66 +88,43 @@ const singleProduct = async (req, res) => {
   }
 };
 
-//function for edit product
+// Function for edit product
 const editProduct = async (req, res) => {
-  console.log("Editing product:", id);
-  console.log("New name:", name);
-  console.log("Files received:", Object.keys(files));
-
   try {
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
-    const { id, name, description, price, category } = req.body;
-    const files = req.files || {};
+    const { id } = req.params;
+    const { name, description, price, category } = req.body;
+
     const product = await Product.findById(id);
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+    if (!product) return res.json({ success: false, message: "Product not found" });
+
+    const imageFields = ['image1', 'image2', 'image3', 'image4'];
+    let newImageUrls = [];
+
+    for (const field of imageFields) {
+      if (req.files?.[field]?.[0]) {
+        const uploaded = await uploadToCloudinary(
+          req.files[field][0].buffer,
+          req.files[field][0].originalname
+        );
+        newImageUrls.push(uploaded);
+      } else if (req.body[`existingImage_${field}`]) {
+        newImageUrls.push(req.body[`existingImage_${field}`]);
+      }
     }
 
-    // Update basic fields
-    if (name) product.name = name;
-    if (description) product.description = description;
-    if (price) product.price = Number(price);
-    if (category) product.category = category;
-
-    // Upload images (if provided)
-    const imageFields = ["image1", "image2", "image3", "image4"];
-    const newImages = [];
-
-    for (let field of imageFields) {
-        if (files[field] && files[field][0]) {
-          try {
-            const result = await cloudinary.uploader.upload(files[field][0].path, {
-              resource_type: 'image',
-            });
-            newImages.push(result.secure_url);
-          } catch (err) {
-            console.error(`Cloudinary upload failed for ${field}`, err);
-          }
-        }
-      }
-      
-
-    // Replace old images only if new ones provided
-    if (newImages.length > 0) {
-        product.img = newImages;
-      }      
+    product.name = name;
+    product.description = description;
+    product.price = price;
+    product.category = category;
+    product.images = newImageUrls;
 
     await product.save();
-
-    res.json({
-      success: true,
-      message: "Product updated successfully",
-      product,
-    });
+    res.json({ success: true, message: "Product updated successfully", product });
   } catch (error) {
-    console.error("Edit Product Error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server Error: " + error.message });
+    console.log(error.message);
+    res.json({ success: false, message: error.message });
   }
 };
+
 
 export { addProduct, listProducts, removeProduct, singleProduct, editProduct };

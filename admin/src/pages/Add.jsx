@@ -1,159 +1,198 @@
-import React, { useState } from 'react'
-import assets from '../assets/assets'
-import { backendUrl } from '../App';
+import React, { useState } from 'react';
 import axios from 'axios';
+import { backendUrl } from '../App';
+import { FiUpload, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
-const Add = ({token}) => {
+const Add = ({ token }) => {
+  const [images, setImages] = useState([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    category: 'Body',
+    price: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [image1, setImage1] = useState(false);
-  const [image2, setImage2] = useState(false);
-  const [image3, setImage3] = useState(false);
-  const [image4, setImage4] = useState(false);
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (images.length + files.length > 4) {
+      toast.error('Maximum 4 images allowed');
+      return;
+    }
+    setImages([...images, ...files]);
+  };
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('Body');
-  const [price, setPrice] = useState(0);
+  const removeImage = (index) => {
+    const newImages = [...images];
+    newImages.splice(index, 1);
+    setImages(newImages);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const submitHandler = async (e) => {
     e.preventDefault();
   
-    try {
-      const formData = new FormData();
-  
-      formData.append('name', name);
-      formData.append('description', description);
-      formData.append('category', category);
-      formData.append('price', price);
-  
-      image1 && formData.append('image1', image1);
-      image2 && formData.append('image2', image2);
-      image3 && formData.append('image3', image3);
-      image4 && formData.append('image4', image4);
-  
-      const response = await axios.post(
-        backendUrl + '/api/product/add',
-        formData,
-        {
-          headers: {
-            Authorization : `Bearer ${token}`
-          },
-        }
-      );
-      if (response.data.success) {
-        toast.success(response.data.message);
-        setImage1(false);
-        setImage2(false);
-        setImage3(false);
-        setImage4(false);
-        setName('');
-        setDescription('');
-        setCategory('Body');
-        setPrice(0);
-      }
-      else {
-        toast.error(response.data.message);
-      }
-      
-    } 
-    catch (error) {
-      console.error(error);
-      toast.error("Something went wrong, please try again later." + error.message);
+    if (images.length === 0) {
+      toast.error('Please upload at least one image');
+      return;
     }
-  }
+  
+    setIsSubmitting(true);
+  
+    try {
+      const data = new FormData();
+  
+      // Append text fields
+      data.append('name', formData.name);
+      data.append('description', formData.description);
+      data.append('category', formData.category);
+      data.append('price', formData.price);
+  
+      // Append images with field names: image1, image2, image3, image4
+      images.forEach((image, index) => {
+        data.append(`image${index + 1}`, image);
+      });
+  
+      const response = await axios.post(`${backendUrl}/api/product/add`, data, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+  
+      if (response.data.success) {
+        toast.success('Product added successfully!');
+        setImages([]);
+        setFormData({
+          name: '',
+          description: '',
+          category: 'Body',
+          price: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error(error.response?.data?.message || 'Failed to add product');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
 
   return (
-    <form onSubmit={submitHandler} className='flex flex-col w-full items-start gap-3' action="">
-      <div>
-        <p className='mb-2'>Upload Images</p>
-        <div className='flex gap-2'>
-          <label htmlFor="image1">
-            <img
-              className="cursor-pointer border-2 border-dotted w-20 h-20 bg-gray-200"
-              src={image1 ? URL.createObjectURL(image1) : assets.upload_area}
-              alt="upload"
-            />
-            <input
-              onChange={(e) => setImage1(e.target.files[0])}
-              type="file"
-              id="image1"
-              hidden
-            />
-          </label>
-
-          <label htmlFor="image2">
-            <img
-              className="cursor-pointer border-2 border-dotted w-20 h-20 bg-gray-200"
-              src={image2 ? URL.createObjectURL(image2) : assets.upload_area}
-              alt="upload"
-            />
-            <input
-              onChange={(e) => setImage2(e.target.files[0])}
-              type="file"
-              id="image2"
-              hidden
-            />
-          </label>
-
-          <label htmlFor="image3">
-            <img
-              className="cursor-pointer border-2 border-dotted w-20 h-20 bg-gray-200"
-              src={image3 ? URL.createObjectURL(image3) : assets.upload_area}
-              alt="upload"
-            />
-            <input
-              onChange={(e) => setImage3(e.target.files[0])}
-              type="file"
-              id="image3"
-              hidden
-            />
-          </label>
-
-          <label htmlFor="image4">
-            <img
-              className="cursor-pointer border-2 border-dotted w-20 h-20 bg-gray-200"
-              src={image4 ? URL.createObjectURL(image4) : assets.upload_area}
-              alt="upload"
-            />
-            <input
-              onChange={(e) => setImage4(e.target.files[0])}
-              type="file"
-              id="image4"
-              hidden
-            />
-          </label>
+    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+      <h1 className="text-2xl font-bold mb-6">Add Product</h1>
+      
+      <form onSubmit={submitHandler}>
+        {/* Image Upload Section */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">Product Images (Max 4)</label>
+          <div className="flex flex-wrap gap-3 mb-3">
+            {images.map((image, index) => (
+              <div key={index} className="relative">
+                <img 
+                  src={URL.createObjectURL(image)} 
+                  alt={`Preview ${index}`}
+                  className="w-20 h-20 object-cover rounded border"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                >
+                  <FiX size={12} />
+                </button>
+              </div>
+            ))}
+            {images.length < 4 && (
+              <label className="w-20 h-20 border-2 border-dashed rounded flex items-center justify-center cursor-pointer">
+                <FiUpload size={20} />
+                <input 
+                  type="file" 
+                  onChange={handleImageChange}
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className='w-full'>
-        <p className='mb-2'>Product Name</p>
-        <input onChange={(e) => setName(e.target.value)} value={name} type="text" placeholder='Type Here' required className='w-full max-w-[500px] px-3 py-2' />
-      </div>
-
-      <div className='w-full'>
-        <p className='mb-2'>Product Description</p>
-        <input onChange={(e) => setDescription(e.target.value)} value={description} type="text" placeholder='Type Here' required className='w-full max-w-[500px] px-3 py-2' />
-      </div>
-
-      <div className='flex flex-col sm:flex-row gap-3 w-full sm:gap-8'>
-        <div>
-          <p className='mb-2'>Product Category</p>
-          <select value={category} onChange={(e) => setCategory(e.target.value)}  className='w-full px-3 py-2'>
-            <option value="Body">Body</option>
-            <option value="Inlay">Inlay</option>
-            <option value="Neck">Neck</option>
-          </select>
+        {/* Product Name */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Product Name</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            className="w-full p-2 border rounded"
+          />
         </div>
-        <div>
-          <p className='mb-2'>Product Price</p>
-          <input onChange={(e) => setPrice(e.target.value)} value={price} className='w-full px-3 py-2 sm:w-[120px]' type="Number" placeholder='0' />
+
+        {/* Product Description */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+            rows={3}
+            className="w-full p-2 border rounded"
+          />
         </div>
-      </div>
 
-      <button className='w-28 py-3 mt-4 bg-black text-white'>Add Product</button>
-    </form>
-  )
-}
+        {/* Category and Price */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium mb-1">Category</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              required
+            >
+              <option value="Body">Body</option>
+              <option value="Inlay">Inlay</option>
+              <option value="Neck">Neck</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Price ($)</label>
+            <input
+              type="number"
+              name="price"
+              value={formData.price}
+              onChange={handleChange}
+              min="0"
+              step="0.01"
+              required
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+        
+        <button 
+          type="submit" 
+          disabled={isSubmitting}
+          className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isSubmitting ? 'Adding...' : 'Add Product'}
+        </button>
+      </form>
+    </div>
+  );
+};
 
-export default Add
+export default Add;
