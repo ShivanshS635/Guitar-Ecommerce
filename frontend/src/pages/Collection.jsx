@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
@@ -7,10 +8,14 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 const Collection = () => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialCategory = queryParams.get('category');
+
   const { products } = useContext(ShopContext);
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState(initialCategory ? [initialCategory] : []);
   const [sortType, setSortType] = useState('relavent');
   const [gridView, setGridView] = useState(true);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -21,19 +26,16 @@ const Collection = () => {
   }, []);
 
   useEffect(() => {
-    setFilteredProducts(products);
-    updateActiveFilterCount();
-  }, [products]);
-
-  useEffect(() => {
     let results = [...products];
+
     if (selectedCategories.length > 0) {
       results = results.filter(item => selectedCategories.includes(item.category));
     }
+
     results = sortProducts(results);
     setFilteredProducts(results);
     updateActiveFilterCount();
-  }, [selectedCategories, sortType]);
+  }, [products, selectedCategories, sortType]);
 
   const updateActiveFilterCount = () => {
     let count = 0;

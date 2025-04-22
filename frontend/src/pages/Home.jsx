@@ -5,12 +5,14 @@ import Craftsmanship from '../components/home/Craftsmanship.jsx'
 import YouTubeReviews from '../components/home/YouTubeReviews.jsx'
 import ScreenshotGallery from '../components/home/ScreenshotGallery.jsx';
 import Testimonials from '../components/home/Testimonials.jsx';
-import LatestProducts from '../components/LatestCategories.jsx'
+import LatestProducts from '../components/LatestCategories.jsx';
+import ExploreCategories from '../components/home/ExploreCategories.jsx'
 
 const Home = () => (
   <>
     <Hero />
     <CategoryHighlights />
+    <ExploreCategories/>
     <Craftsmanship />
     <LatestProducts/>
     <YouTubeReviews />
