@@ -22,6 +22,7 @@ import print from './3dprinting.jpg'
 import phonepe from './phonepe.png'
 import filter from './filter.png'
 import empty_orders from './empty_cart.png'
+import founder from './img6.jpg'
 
 import body1 from './BODY_1.jpg';
 import body2 from './BODY_2.jpg';
@@ -536,6 +537,7 @@ export const products = [
 ]
 
 export const assets = {
+    founder : founder,
     empty_orders : empty_orders,
     filter : filter,
     close : close,
