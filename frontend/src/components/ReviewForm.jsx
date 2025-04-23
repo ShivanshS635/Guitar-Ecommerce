@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import axios from 'axios';
 import { FaStar } from 'react-icons/fa';
 import { ShopContext } from '../context/ShopContext';
+import { toast } from 'react-toastify';  // Import toast
 
 const ReviewForm = () => {
   const [description, setDescription] = useState('');
@@ -9,21 +10,25 @@ const ReviewForm = () => {
   const [hover, setHover] = useState(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const {backendUrl , token} = useContext(ShopContext);
+  const { backendUrl, token } = useContext(ShopContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!description || rating === 0) return;
+    if (!description || rating === 0) {
+      toast.error('Please provide a review and rating!');  // Error toast if form is incomplete
+      return;
+    }
 
     try {
       setLoading(true);
-      const res = await axios.post(backendUrl +  '/api/reviews/text', { description, rating } ,{ headers: { Authorization: `Bearer ${token}` } });
-      console.log(res)
+      const res = await axios.post(backendUrl + '/api/reviews/text', { description, rating }, { headers: { Authorization: `Bearer ${token}` } });
       setDescription('');
       setRating(0);
       setSuccess(true);
+      toast.success('Thank you for your review!');  // Success toast on successful submission
     } catch (err) {
       console.error('Error submitting review:', err);
+      toast.error('Error submitting your review.'+ err.response.data.message);  // Error toast on failure
     } finally {
       setLoading(false);
     }
