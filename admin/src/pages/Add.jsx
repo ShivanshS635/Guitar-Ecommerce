@@ -16,17 +16,15 @@ const Add = ({ token }) => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    if (images.length + files.length > 4) {
-      toast.error('Maximum 4 images allowed');
+    if (images.length + files.length > 10) {
+      toast.error('Maximum 10 images allowed');
       return;
     }
-    setImages([...images, ...files]);
+    setImages(prev => [...prev, ...files]);
   };
 
   const removeImage = (index) => {
-    const newImages = [...images];
-    newImages.splice(index, 1);
-    setImages(newImages);
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleChange = (e) => {
@@ -39,34 +37,32 @@ const Add = ({ token }) => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
-  
+
     if (images.length === 0) {
       toast.error('Please upload at least one image');
       return;
     }
-  
+
     setIsSubmitting(true);
-  
+
     try {
       const data = new FormData();
-  
-      // Append text fields
+
       data.append('name', formData.name);
       data.append('description', formData.description);
       data.append('category', formData.category);
       data.append('price', formData.price);
-  
-      // Append images with field names: image1, image2, image3, image4
+
       images.forEach((image, index) => {
         data.append(`image${index + 1}`, image);
       });
-  
+
       const response = await axios.post(`${backendUrl}/api/product/add`, data, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-  
+
       if (response.data.success) {
         toast.success('Product added successfully!');
         setImages([]);
@@ -84,17 +80,16 @@ const Add = ({ token }) => {
       setIsSubmitting(false);
     }
   };
-  
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow">
       <h1 className="text-2xl font-bold mb-6">Add Product</h1>
-      
+
       <form onSubmit={submitHandler}>
         {/* Image Upload Section */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">Product Images (Max 4)</label>
-          <div className="flex flex-wrap gap-3 mb-3">
+          <label className="block text-sm font-medium mb-2">Product Images (Max 10)</label>
+          <div className="grid grid-cols-5 gap-3 mb-3">
             {images.map((image, index) => (
               <div key={index} className="relative">
                 <img 
@@ -111,7 +106,7 @@ const Add = ({ token }) => {
                 </button>
               </div>
             ))}
-            {images.length < 4 && (
+            {images.length < 10 && (
               <label className="w-20 h-20 border-2 border-dashed rounded flex items-center justify-center cursor-pointer">
                 <FiUpload size={20} />
                 <input 
@@ -139,7 +134,7 @@ const Add = ({ token }) => {
           />
         </div>
 
-        {/* Product Description */}
+        {/* Description */}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">Description</label>
           <textarea
@@ -169,7 +164,7 @@ const Add = ({ token }) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Price ($)</label>
+            <label className="block text-sm font-medium mb-1">Price (₹)</label>
             <input
               type="number"
               name="price"
@@ -182,7 +177,7 @@ const Add = ({ token }) => {
             />
           </div>
         </div>
-        
+
         <button 
           type="submit" 
           disabled={isSubmitting}

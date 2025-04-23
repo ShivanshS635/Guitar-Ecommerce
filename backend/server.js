@@ -11,6 +11,7 @@ import orderRouter from './routes/orderRoutes.js';
 import reviewRouter from './routes/reviewRoutes.js';
 import inquiryRouter from './routes/inquiryRoutes.js';
 import contactRouter from './routes/contactRoutes.js';
+import galleryRouter from './routes/galleryRoutes.js'
 
 const app = express()
 const PORT = process.env.PORT || 4000
@@ -30,6 +31,7 @@ app.use('/api/order' , orderRouter)
 app.use('/api/reviews' , reviewRouter)
 app.use('/api/inquiry' , inquiryRouter)
 app.use('/api/contact', contactRouter);
+app.use('/api/gallery' , galleryRouter)
 
 
 app.get('/', (req, res) => {

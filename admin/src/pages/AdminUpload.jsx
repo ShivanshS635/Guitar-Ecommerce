@@ -3,51 +3,44 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { backendUrl } from '../App';
 
-const AdminUpload = ({ token }) => {
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [file, setFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
-  const [youtubePreview, setYoutubePreview] = useState('');
+const categories = ['body', 'neck', 'inlay', 'product'];
 
-  const extractYouTubeId = (url) => {
-    const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
+const GalleryUpload = ({ token }) => {
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [category, setCategory] = useState('body');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const validImages = files.filter((file) => file.type.startsWith('image/'));
+    setImageFiles(validImages);
+    setImagePreviews(validImages.map((file) => URL.createObjectURL(file)));
   };
 
-  const handleYoutubeSubmit = async (e) => {
-    e.preventDefault();
-    if (!youtubeUrl) return toast.error('Please enter a valid YouTube link.');
-    const videoId = extractYouTubeId(youtubeUrl);
-    if (!videoId) return toast.error('Invalid YouTube link format.');
+  const handleCategoryChange = (e) => {
+    setCategory(e.target.value);
+  };
 
-    try {
-      const res = await axios.post(
-        `${backendUrl}/api/reviews/submit`,
-        { videoUrl: youtubeUrl },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.data.success) {
-        toast.success('YouTube review submitted!');
-        setYoutubeUrl('');
-        setYoutubePreview('');
-      } else {
-        toast.error(res.data.message);
-      }
-    } catch (error) {
-      toast.error('Error submitting YouTube link.');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!imageFiles || imageFiles.length === 0) {
+      setMessage('Please select images to upload');
+      return;
     }
-  };
 
-  const handleScreenshotUpload = async (e) => {
-    e.preventDefault();
-    if (!file) return toast.error('Please select an image.');
+    setLoading(true);
     const formData = new FormData();
-    formData.append('image', file);
+    imageFiles.forEach((file, i) => {
+      formData.append(`image${i + 1}`, file);
+    });
+    formData.append('category', category);
 
     try {
-      const res = await axios.post(
-        `${backendUrl}/api/reviews/upload-image`,
+      const response = await axios.post(
+        `${backendUrl}/api/gallery/add`,
         formData,
         {
           headers: {
@@ -56,140 +49,91 @@ const AdminUpload = ({ token }) => {
           },
         }
       );
-      if (res.data.success) {
-        toast.success('Screenshot uploaded!');
-        setFile(null);
-        setPreviewUrl('');
+      if (response.data.success) {
+        toast.success('Images uploaded successfully!');
+        setImageFiles([]);
+        setImagePreviews([]);
       } else {
-        toast.error(res.data.message);
+        toast.error(response.data.message);
       }
     } catch (error) {
-      toast.error('Failed to upload screenshot.');
-    }
-  };
-
-  const handleFileDrop = (e) => {
-    e.preventDefault();
-    const droppedFile = e.dataTransfer.files[0];
-    setFile(droppedFile);
-    if (droppedFile) {
-      setPreviewUrl(URL.createObjectURL(droppedFile));
+      toast.error('Error uploading images');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="bg-white text-gray-800 min-h-screen pt-12 px-4 sm:px-10 lg:px-16">
       <h2 className="text-3xl sm:text-4xl text-center mb-10 font-bold text-yellow-600 drop-shadow-md">
-        Admin: Upload Review
+        Upload Gallery Images
       </h2>
 
       <div className="bg-gray-100 p-8 rounded-xl shadow-md max-w-3xl mx-auto space-y-12 border border-gray-200">
-        {/* YouTube Upload */}
+        {/* Category Select */}
         <div>
-          <form onSubmit={handleYoutubeSubmit} className="space-y-4">
-            <label className="block text-lg font-semibold mb-1">YouTube Link</label>
-            <input
-              type="text"
-              value={youtubeUrl}
-              onChange={(e) => {
-                setYoutubeUrl(e.target.value);
-                const vid = extractYouTubeId(e.target.value);
-                if (vid) setYoutubePreview(`https://img.youtube.com/vi/${vid}/mqdefault.jpg`);
-                else setYoutubePreview('');
-              }}
-              placeholder="Paste full YouTube URL (Video/Shorts)"
-              className="bg-white text-gray-800 py-3 px-4 rounded-md w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            />
-
-            {youtubePreview && (
-              <div className="flex flex-col items-center space-y-2">
-                <img
-                  src={youtubePreview}
-                  alt="YouTube Preview"
-                  className="w-full max-w-xs rounded-lg shadow-md border"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setYoutubeUrl('');
-                    setYoutubePreview('');
-                  }}
-                  className="text-sm text-red-500 hover:underline"
-                >
-                  Clear Preview
-                </button>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="mt-4 bg-yellow-500 hover:bg-yellow-400 text-white px-6 py-3 rounded-md font-semibold transition"
-            >
-              Submit YouTube Link
-            </button>
-          </form>
+          <label className="block text-lg font-semibold mb-1">Select Category</label>
+          <select
+            value={category}
+            onChange={handleCategoryChange}
+            className="bg-white text-gray-800 py-3 px-4 rounded-md w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat.toUpperCase()}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Screenshot Upload */}
+        {/* Image Upload */}
         <div>
-          <form onSubmit={handleScreenshotUpload} className="space-y-4">
-            <label className="block text-lg font-semibold mb-1">Screenshot Upload</label>
-
-            {/* Drag and Drop Area */}
-            <div
-              onDrop={handleFileDrop}
-              onDragOver={(e) => e.preventDefault()}
-              className="w-full p-6 border-2 border-dashed border-gray-400 rounded-lg bg-white text-center hover:border-yellow-500 transition"
-            >
-              <p className="text-sm text-gray-500">Drag & drop screenshot here or use the file selector below</p>
-            </div>
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const selectedFile = e.target.files[0];
-                setFile(selectedFile);
-                if (selectedFile) {
-                  setPreviewUrl(URL.createObjectURL(selectedFile));
-                } else {
-                  setPreviewUrl('');
-                }
-              }}
-              className="bg-white text-gray-800 py-2 px-4 rounded-md w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-            />
-
-            {previewUrl && (
-              <div className="flex flex-col items-center space-y-2">
-                <img
-                  src={previewUrl}
-                  alt="Screenshot Preview"
-                  className="w-full max-w-xs rounded-lg border border-yellow-500 shadow"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreviewUrl('');
-                    setFile(null);
-                  }}
-                  className="text-sm text-red-500 hover:underline"
-                >
-                  Clear Preview
-                </button>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="mt-4 bg-yellow-500 hover:bg-yellow-400 text-white px-6 py-3 rounded-md font-semibold transition"
-            >
-              Upload Screenshot
-            </button>
-          </form>
+          <label className="block text-lg font-semibold mb-1">Choose Images</label>
+          <input
+            type="file"
+            multiple
+            onChange={handleImageChange}
+            className="bg-white text-gray-800 py-2 px-4 rounded-md w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            accept="image/*"
+          />
         </div>
+
+        {/* Image Previews */}
+        {imagePreviews.length > 0 && (
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            {imagePreviews.map((src, idx) => (
+              <img
+                key={idx}
+                src={src}
+                alt={`preview-${idx}`}
+                className="w-full h-24 object-cover rounded-lg shadow-lg border"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Submit Button */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="mt-4 bg-yellow-500 hover:bg-yellow-400 text-white px-6 py-3 rounded-md font-semibold transition"
+        >
+          {loading ? 'Uploading...' : 'Upload'}
+        </button>
+
+        {/* Status Message */}
+        {message && (
+          <p
+            className={`mt-4 text-sm ${
+              message.includes('success') ? 'text-green-600' : 'text-red-600'
+            }`}
+          >
+            {message}
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
-export default AdminUpload;
+export default GalleryUpload;

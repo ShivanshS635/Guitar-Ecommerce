@@ -22,8 +22,13 @@ const Sidebar = () => {
             </NavLink>
 
             <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-lg' to='/upload'>
-                <img className='w-5 h-5' src={assets.parcel_icon}/>
+                <img className='w-5 h-5' src={assets.review}/>
                 <p className='hidden md:block'>Reviews Upload</p>
+            </NavLink>
+
+            <NavLink className='flex items-center gap-3 border border-gray-300 border-r-0 px-3 py-2 rounded-lg' to='/gallery'>
+                <img className='w-5 h-5' src={assets.gallery}/>
+                <p className='hidden md:block'>Gllery Upload</p>
             </NavLink>
         </div>
     </div>

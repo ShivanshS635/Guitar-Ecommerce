@@ -9,9 +9,10 @@ import Login from './components/Login.jsx'
 import { ToastContainer, toast } from 'react-toastify';
 import Edit from './pages/Edit.jsx'
 import AdminUpload from './pages/AdminUpload.jsx'
+import UploadGallery from './pages/UploadGallery.jsx'
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL;
-export const currency = '₹'; // previously it was '$'
+export const currency = '₹';
 
 
 const App = () => {
@@ -40,6 +41,7 @@ const App = () => {
               <Route path='/list' element={<List token = {token}/>}/>
               <Route path='/orders' element={<Orders token = {token}/>}/>
               <Route path='/upload' element={<AdminUpload token={token}/>}/>
+              <Route path='/gallery' element={<UploadGallery/>}/>
             </Routes>
           </div>
         </div>

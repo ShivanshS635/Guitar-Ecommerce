@@ -8,16 +8,26 @@ const upload = multer({ storage: multer.memoryStorage() });
 const addProduct = async (req, res) => {
   try {
     const { name, description, price, category } = req.body;
-    const image1 = req.files.image1 && req.files.image1[0];
-    const image2 = req.files.image2 && req.files.image2[0];
-    const image3 = req.files.image3 && req.files.image3[0];
-    const image4 = req.files.image4 && req.files.image4[0];
 
-    const images = [image1, image2, image3, image4].filter(
-      (image) => image !== undefined
-    );
+    // Collect all possible image fields
+    const imageFields = [
+      req.files.image1?.[0],
+      req.files.image2?.[0],
+      req.files.image3?.[0],
+      req.files.image4?.[0],
+      req.files.image5?.[0],
+      req.files.image6?.[0],
+      req.files.image7?.[0],
+      req.files.image8?.[0],
+      req.files.image9?.[0],
+      req.files.image10?.[0]
+    ];
 
-    let imageUrls = await Promise.all(
+    // Filter out undefined ones
+    const images = imageFields.filter(Boolean);
+
+    // Upload each image to Cloudinary
+    const imageUrls = await Promise.all(
       images.map(async (image) => {
         const result = await cloudinary.uploader.upload(image.path, {
           resource_type: "image",
@@ -26,6 +36,7 @@ const addProduct = async (req, res) => {
       })
     );
 
+    // Construct product data
     const productData = {
       name,
       description,
@@ -35,6 +46,7 @@ const addProduct = async (req, res) => {
       date: Date.now(),
     };
 
+    // Save to database
     const product = new Product(productData);
     await product.save();
 
@@ -44,6 +56,7 @@ const addProduct = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
 
 
 
