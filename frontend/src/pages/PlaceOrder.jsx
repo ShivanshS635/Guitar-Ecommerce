@@ -70,9 +70,11 @@ const PlaceOrder = () => {
       const orderData = {
         address: formData,
         items: orderItems,
-        amount: formatPrice(getCartAmount()) + deliveryCharges,
+        amount: (getCartAmount()) + deliveryCharges,
         date: Date.now(),
       };
+
+      console.log(orderData)
 
       if (method === 'cod') {
         const res = await axios.post(`${backendUrl}/api/order/place`, orderData, 

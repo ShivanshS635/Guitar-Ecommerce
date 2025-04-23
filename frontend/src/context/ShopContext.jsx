@@ -10,9 +10,7 @@ const ShopContextProvider = (props) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const deliveryCharges = 0;
 
-  const [selectedCurrency, setSelectedCurrency] = useState(
-    localStorage.getItem("selectedCurrency") || "INR"
-  );
+  const [selectedCurrency, setSelectedCurrency] = useState(localStorage.getItem("selectedCurrency") || "INR");
   const [currencyRates, setCurrencyRates] = useState({});
   const [cartItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
