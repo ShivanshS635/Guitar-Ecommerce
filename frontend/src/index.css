@@ -13,7 +13,15 @@ button{
     cursor: pointer;
 }
 
-
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0px yellow; }
+    50% { box-shadow: 0 0 10px yellow; }
+    100% { box-shadow: 0 0 0px yellow; }
+  }
+  .animate-glow {
+    animation: pulseGlow 2s infinite;
+  }
+  
 
 .prata-regular {
     font-family: "Prata", serif;

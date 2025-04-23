@@ -3,6 +3,7 @@ import { assets } from '../assets/assets';
 import { Link, NavLink } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import CurrencyConverter from './CurrencyConverter';
+import { motion } from 'framer-motion';
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
@@ -51,38 +52,62 @@ const Navbar = () => {
   }, [scrolled]);
 
   return (
-    <div 
-      className={`w-full bg-black text-white px-[7vw] py-3 flex items-center justify-between fixed top-0 z-30 transition-all duration-300 ${
-        scrolled ? 'shadow-lg bg-opacity-95 py-2' : 'bg-opacity-100'
-      }`}
+    <div
+      className={`w-full bg-black text-white px-[7vw] py-3 flex items-center justify-between fixed top-0 z-30 transition-all duration-300 ${scrolled ? 'shadow-lg bg-opacity-95 py-2' : 'bg-opacity-100'
+        }`}
     >
       {/* Logo */}
       <Link to="/">
-        <img 
-          src={assets.logo} 
-          alt="Website Logo" 
-          className="w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all duration-300 hover:scale-105" 
+        <img
+          src={assets.logo}
+          alt="Website Logo"
+          className="w-16 h-16 sm:w-20 sm:h-20 rounded-full transition-all duration-300 hover:scale-105"
         />
       </Link>
 
-      {/* Nav Links - Desktop */}
-      <ul className="hidden sm:flex gap-3 text-sm">
+
+      <ul className="hidden sm:flex gap-3 text-sm font-semibold tracking-wide relative">
         {navLinks.map(({ path, label }) => (
           <NavLink
             key={path}
             to={path}
-            className={({ isActive }) =>
-              `flex flex-col items-center gap-1 px-3 py-2 rounded-full transition duration-300 ease-in-out ${
-                isActive 
-                  ? 'bg-yellow-400 text-black font-bold shadow-md' 
-                  : 'text-yellow-400 hover:bg-yellow-400 hover:text-black hover:shadow-md'
-              }`
-            }
+            className="relative group px-5 py-2 rounded-md overflow-hidden"
           >
-            <p>{label}</p>
+            {({ isActive }) => (
+              <>
+                <motion.span
+                  initial={{ y: 0 }}
+                  whileHover={{ y: -2 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                  className={`z-10 relative transition-colors duration-300 ${isActive ? 'text-black' : 'text-yellow-300 group-hover:text-yellow-100'
+                    }`}
+                >
+                  {label}
+                </motion.span>
+
+                {isActive && (
+                  <motion.div
+                    layoutId="activeLink"
+                    className="absolute inset-0 rounded-md bg-gradient-to-r from-yellow-400 to-yellow-300 shadow-inner shadow-yellow-300 animate-glow"
+                  />
+                )}
+
+                <motion.div
+                  layout
+                  className="absolute left-0 bottom-0 h-[2px] bg-yellow-300"
+                  initial={{ width: 0 }}
+                  whileHover={{ width: '100%' }}
+                  transition={{ duration: 0.4, ease: 'easeInOut' }}
+                />
+              </>
+            )}
           </NavLink>
         ))}
       </ul>
+
+
+
+
 
       {/* Right Side */}
       <div className="flex items-center gap-4 sm:gap-6">
@@ -93,8 +118,8 @@ const Navbar = () => {
 
         {/* Profile */}
         <div className="group relative z-[100]">
-          <div 
-            onClick={() => (token ? null : navigate('/login'))} 
+          <div
+            onClick={() => (token ? null : navigate('/login'))}
             className="flex items-center gap-1 cursor-pointer"
           >
             <img
@@ -108,30 +133,30 @@ const Navbar = () => {
               </span>
             )}
           </div>
-          
+
           {token && (
             <div className="group-hover:block hidden absolute right-0 pt-4 animate-fadeIn">
               <div className="flex flex-col gap-2 w-48 py-3 px-4 bg-gray-800 text-yellow-300 rounded-lg shadow-xl border border-gray-700">
-                <p 
+                <p
                   onClick={() => {
                     navigate('/profile');
                     setVisible(false);
-                  }} 
+                  }}
                   className="cursor-pointer hover:text-yellow-100 hover:bg-gray-700 px-2 py-1 rounded transition"
                 >
                   My Profile
                 </p>
-                <p 
+                <p
                   onClick={() => {
                     navigate('/orders');
                     setVisible(false);
-                  }} 
+                  }}
                   className="cursor-pointer hover:text-yellow-100 hover:bg-gray-700 px-2 py-1 rounded transition"
                 >
                   My Orders
                 </p>
-                <p 
-                  onClick={logout} 
+                <p
+                  onClick={logout}
                   className="cursor-pointer hover:text-yellow-100 hover:bg-gray-700 px-2 py-1 rounded transition"
                 >
                   Logout
@@ -142,8 +167,8 @@ const Navbar = () => {
         </div>
 
         {/* Cart */}
-        <Link 
-          to="/cart" 
+        <Link
+          to="/cart"
           className="relative group"
           aria-label={`Shopping Cart with ${getCartCount()} items`}
         >
@@ -176,17 +201,16 @@ const Navbar = () => {
       {/* Mobile Menu */}
       <div
         ref={menuRef}
-        className={`fixed top-0 right-0 bottom-0 bg-black/95 backdrop-blur-md text-yellow-300 transform transition-all duration-300 ease-in-out ${
-          visible ? 'translate-x-0 w-full sm:w-96' : 'translate-x-full w-0'
-        } overflow-hidden z-[1000] flex flex-col`}
+        className={`fixed top-0 right-0 bottom-0 bg-black/95 backdrop-blur-md text-yellow-300 transform transition-all duration-300 ease-in-out ${visible ? 'translate-x-0 w-full sm:w-96' : 'translate-x-full w-0'
+          } overflow-hidden z-[1000] flex flex-col`}
       >
         {/* Mobile Menu Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-700">
           <Link to="/" onClick={() => setVisible(false)}>
-            <img 
-              src={assets.logo} 
-              alt="Website Logo" 
-              className="h-12 rounded-full" 
+            <img
+              src={assets.logo}
+              alt="Website Logo"
+              className="h-12 rounded-full"
             />
           </Link>
           <button
@@ -194,10 +218,10 @@ const Navbar = () => {
             className="p-2 focus:outline-none"
             aria-label="Close menu"
           >
-            <img 
-              src={assets.close} 
-              alt="Close" 
-              className="h-5 filter brightness-0 invert" 
+            <img
+              src={assets.close}
+              alt="Close"
+              className="h-5 filter brightness-0 invert"
             />
           </button>
         </div>
@@ -220,10 +244,9 @@ const Navbar = () => {
                 onClick={() => setVisible(false)}
                 to={path}
                 className={({ isActive }) =>
-                  `block py-4 px-6 text-lg transition duration-300 ease-in-out ${
-                    isActive 
-                      ? 'bg-yellow-400 text-black font-bold' 
-                      : 'hover:bg-gray-800 hover:text-yellow-100'
+                  `block py-4 px-6 text-lg transition duration-300 ease-in-out ${isActive
+                    ? 'bg-yellow-400 text-black font-bold'
+                    : 'hover:bg-gray-800 hover:text-yellow-100'
                   }`
                 }
               >
