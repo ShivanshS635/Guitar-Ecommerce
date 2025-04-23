@@ -1,46 +1,62 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 export const ShopContext = createContext();
 
-const ShopContextProvider = (props) => {
+const ShopContextProvider = ({ children }) => {
   const navigate = useNavigate();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const deliveryCharges = 0;
 
-  const [selectedCurrency, setSelectedCurrency] = useState(localStorage.getItem("selectedCurrency") || "INR");
+  // State management
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    localStorage.getItem("selectedCurrency") || "INR"
+  );
   const [currencyRates, setCurrencyRates] = useState({});
   const [cartItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const fetchConversionRates = async () => {
+  // Memoized currency conversion function
+  const formatPrice = useCallback(
+    (priceInINR) => {
+      if (!priceInINR) return "";
+      const exchangeRate = currencyRates[selectedCurrency] || 1;
+      const convertedPrice = priceInINR * exchangeRate;
+
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: selectedCurrency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(convertedPrice);
+    },
+    [selectedCurrency, currencyRates]
+  );
+
+  // Fetch currency rates with error handling
+  const fetchConversionRates = useCallback(async () => {
     try {
       const res = await axios.get(
-        'https://api.exchangerate.host/latest?access_key=e920212a1cd5b9017faec20a15fb1b6c',
+        "https://api.exchangerate.host/latest?base=INR",
         {
           headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
+            Accept: "application/json",
+            "Content-Type": "application/json",
           },
+          timeout: 5000, // Add timeout
         }
       );
 
-      if (res.data && res.data.success) {
-        const rates = res.data.rates;
-        const inrRate = rates['INR'];
-
-        setCurrencyRates({
-          INR: 1,
-          USD: (rates['USD'] / inrRate).toFixed(4),
-          EUR: (rates['EUR'] / inrRate).toFixed(4),
-          GBP: (rates['GBP'] / inrRate).toFixed(4),
-        });
+      if (res.data?.success) {
+        setCurrencyRates(res.data.rates);
       }
     } catch (error) {
-      toast.error("Could not fetch live exchange rates.");
+      console.error("Currency fetch error:", error);
+      toast.error("Could not fetch live exchange rates. Using default rates.");
       setCurrencyRates({
         INR: 1,
         USD: 0.012,
@@ -48,155 +64,133 @@ const ShopContextProvider = (props) => {
         GBP: 0.0095,
       });
     }
-  };
+  }, []);
 
-  const formatPrice = (priceInINR) => {
-    const exchangeRate = currencyRates[selectedCurrency] || 1;
-    const convertedPrice = priceInINR * exchangeRate;
-
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: selectedCurrency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(convertedPrice);
-  };
-
-  const getProducts = async () => {
+  // Fetch products with loading state
+  const getProducts = useCallback(async () => {
+    setIsLoading(true);
     try {
-      const res = await axios.get(backendUrl + "/api/product/list");
-      if (res.data.success) {
-        const productsWithOriginalPrices = res.data.products.map(product => ({
-          ...product,
-          priceInINR: product.price
-        }));
-        setProducts(productsWithOriginalPrices);
-      } else {
-        toast.error(res.data.message);
+      const res = await axios.get(`${backendUrl}/api/product/list`);
+      if (res.data?.success) {
+        setProducts(
+          res.data.products.map((product) => ({
+            ...product,
+            priceInINR: product.price, // Store original price
+          }))
+        );
       }
     } catch (error) {
+      console.error("Product fetch error:", error);
       toast.error("Error fetching products");
-      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [backendUrl]);
 
-  const handleCurrencyChange = (newCurrency) => {
+  // Handle currency change
+  const handleCurrencyChange = useCallback((newCurrency) => {
     setSelectedCurrency(newCurrency);
     localStorage.setItem("selectedCurrency", newCurrency);
-  };
+  }, []);
 
+  // Cart operations
+  const addToCart = useCallback(
+    async (itemId) => {
+      const newCartItems = { ...cartItems };
+      newCartItems[itemId] = (newCartItems[itemId] || 0) + 1;
+      setCartItems(newCartItems);
+
+      if (token) {
+        try {
+          await axios.post(
+            `${backendUrl}/api/cart/add`,
+            { itemId },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        } catch (error) {
+          console.error("Add to cart error:", error);
+          toast.error("Failed to add item to cart.");
+          // Revert on error
+          setCartItems(cartItems);
+        }
+      }
+    },
+    [cartItems, token, backendUrl]
+  );
+
+  const updateQuantity = useCallback(
+    async (itemId, quantity) => {
+      const newCartItems = { ...cartItems };
+      if (quantity <= 0) {
+        delete newCartItems[itemId];
+      } else {
+        newCartItems[itemId] = quantity;
+      }
+      setCartItems(newCartItems);
+
+      if (token) {
+        try {
+          await axios.post(
+            `${backendUrl}/api/cart/update`,
+            { itemId, quantity },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        } catch (error) {
+          console.error("Update cart error:", error);
+          toast.error("Failed to update item quantity.");
+          setCartItems(cartItems);
+        }
+      }
+    },
+    [cartItems, token, backendUrl]
+  );
+
+  const getCartCount = useCallback(() => {
+    return Object.values(cartItems).reduce((sum, quantity) => sum + quantity, 0);
+  }, [cartItems]);
+
+  const getCartAmount = useCallback(() => {
+    return Object.entries(cartItems).reduce((total, [itemId, quantity]) => {
+      const product = products.find((p) => p._id === itemId);
+      return total + (product?.price || 0) * quantity;
+    }, 0);
+  }, [cartItems, products]);
+
+  // Fetch user cart
+  const getUserCart = useCallback(
+    async (userToken) => {
+      try {
+        const resp = await axios.post(
+          `${backendUrl}/api/cart/get`,
+          {},
+          { headers: { Authorization: `Bearer ${userToken}` } }
+        );
+        if (resp.data?.success) {
+          setCartItems(resp.data.cartData || {});
+        }
+      } catch (error) {
+        console.error("Get cart error:", error);
+        toast.error("Failed to fetch cart.");
+      }
+    },
+    [backendUrl]
+  );
+
+  // Effects
   useEffect(() => {
     fetchConversionRates();
-    const interval = setInterval(fetchConversionRates, 3600000);
+    const interval = setInterval(fetchConversionRates, 3600000); // Refresh hourly
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchConversionRates]);
 
   useEffect(() => {
-    if (!token && localStorage.getItem("token")) {
-      setToken(localStorage.getItem("token"));
-      getUserCart(localStorage.getItem("token"));
-    }
-  }, [token]);
-
-  useEffect(() => {
-    fetchConversionRates();
-  }, []);
-
-  useEffect(() => {
-    if (Object.keys(currencyRates).length > 0) {
+    if (token) {
+      getUserCart(token);
       getProducts();
     }
-  }, [currencyRates, selectedCurrency]);
+  }, [token, getUserCart, getProducts]);
 
-  useEffect(() => {
-    if (!token && localStorage.getItem("token")) {
-      setToken(localStorage.getItem("token"));
-      getUserCart(localStorage.getItem("token"));
-    }
-  }, [token]);
-
-  const addToCart = async (itemId) => {
-    let cartData = structuredClone(cartItems);
-    if (cartData) {
-      if (cartData[itemId]) cartData[itemId] += 1;
-      else cartData[itemId] = 1;
-    } else {
-      cartData[itemId] = 1;
-    }
-    setCartItems(cartData);
-
-    if (token) {
-      try {
-        await axios.post(
-          backendUrl + "/api/cart/add",
-          { itemId },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } catch (error) {
-        console.error(error.message);
-        toast.error("Failed to add item to cart.");
-      }
-    }
-  };
-
-  const getCartCount = () => {
-    let count = 0;
-    for (let item in cartItems) {
-      count += cartItems[item];
-    }
-    return count;
-  };
-
-  const updateQuantity = async (itemId, quantity) => {
-    let cartData = structuredClone(cartItems);
-    if (cartData) {
-      if (quantity === 0) delete cartData[itemId];
-      else cartData[itemId] = quantity;
-    }
-    setCartItems(cartData);
-
-    if (token) {
-      try {
-        await axios.post(
-          backendUrl + "/api/cart/update",
-          { itemId, quantity },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } catch (error) {
-        console.error(error.message);
-        toast.error("Failed to update item quantity.");
-      }
-    }
-  };
-
-  const getCartAmount = () => {
-    let total = 0;
-    for (let item in cartItems) {
-      const product = products.find((product) => product._id === item);
-      if (product) {
-        total += product.price * cartItems[item];
-      }
-    }
-    return total;
-  };
-
-  const getUserCart = async (token) => {
-    try {
-      const resp = await axios.post(
-        backendUrl + "/api/cart/get",
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (resp.data.success) {
-        setCartItems(resp.data.cartData);
-      }
-    } catch (error) {
-      console.error(error.message);
-      toast.error("Failed to fetch cart.");
-    }
-  };
-
-
+  // Context value
   const value = {
     navigate,
     backendUrl,
@@ -206,7 +200,11 @@ const ShopContextProvider = (props) => {
     products,
     token,
     deliveryCharges,
-    setToken,
+    isLoading,
+    setToken: (newToken) => {
+      setToken(newToken);
+      localStorage.setItem("token", newToken);
+    },
     addToCart,
     getCartCount,
     updateQuantity,
@@ -214,13 +212,10 @@ const ShopContextProvider = (props) => {
     getCartAmount,
     handleCurrencyChange,
     formatPrice,
+    clearCart: () => setCartItems({}),
   };
 
-  return (
-    <ShopContext.Provider value={value}>
-      {props.children}
-    </ShopContext.Provider>
-  );
+  return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
 };
 
 export default ShopContextProvider;
