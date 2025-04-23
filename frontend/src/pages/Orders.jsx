@@ -54,30 +54,30 @@ const Orders = () => {
     const orange = [217, 83, 30];
     const grey = [245, 245, 245];
     const darkGrey = [40, 40, 40];
-  
+
     // Set document metadata
     doc.setProperties({
       title: `Order Receipt - ${order._id}`,
       subject: 'Purchase Receipt',
       author: '3xizGuitars',
     });
-  
+
     // Header Bar
     doc.setFillColor(...orange);
     doc.rect(0, 0, 210, 12, 'F');
-  
+
     // Grey Info Background (Sub-header)
     doc.setFillColor(...grey);
     doc.rect(10, 16, 190, 32, 'F');
-  
+
     // Watermark
     doc.setTextColor(240, 240, 240);
     doc.setFontSize(60);
     doc.text('3xizGuitars', 105, 150, { align: 'center', angle: 45 });
-  
+
     // Logo
     doc.addImage(assets.logo, 'JPEG', 14, 20, 26, 26);
-  
+
     // Seller Info
     doc.setFontSize(11);
     doc.setTextColor(50);
@@ -85,11 +85,11 @@ const Orders = () => {
     doc.text('Yamuna Nagar', 45, 30);
     doc.text('3xizguitars@gmail.com', 45, 36);
     doc.text('+91 95180 35716', 45, 42);
-  
+
     doc.setFontSize(18);
     doc.setTextColor(50);
     doc.text('RECEIPT', 148, 24, { align: 'center' });
-  
+
     // Receipt Number + Date
     doc.setFontSize(11);
     doc.setTextColor(50);
@@ -98,14 +98,14 @@ const Orders = () => {
     const receiptNo = `3XIZ-${datePart}-${hash}`;
     doc.text(`Date: ${new Date(order.date).toLocaleDateString()}`, 135, 36);
     doc.text(`Receipt No: ${receiptNo}`, 135, 42);
-  
+
     // Billing & Shipping
     let y = 60;
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text('BILL TO', 14, y);
     doc.text('SHIP TO', 110, y);
-  
+
     const addr = order.address;
     doc.setFontSize(11);
     doc.setTextColor(0);
@@ -113,12 +113,12 @@ const Orders = () => {
     doc.text(`${addr.street}`, 14, y + 14);
     doc.text(`${addr.city}`, 14, y + 20);
     doc.text(`${addr.email}`, 14, y + 26);
-  
+
     doc.text(`${addr.firstName} ${addr.lastName}`, 110, y + 8);
     doc.text(`${addr.street}`, 110, y + 14);
     doc.text(`${addr.city}`, 110, y + 20);
     doc.text(`${addr.phone || ''}`, 110, y + 26);
-  
+
     // Table Headers
     y += 38;
     doc.setFillColor(...orange);
@@ -129,48 +129,91 @@ const Orders = () => {
     doc.text('QTY', 110, y + 7);
     doc.text('UNIT PRICE', 135, y + 7);
     doc.text('TOTAL', 175, y + 7);
-  
+
     // Table Rows
     y += 15;
     doc.setTextColor(0);
     order.items.forEach((item) => {
-      const itemTotal = (item.price * item.quantity).toFixed(2);
-      doc.rect(12, y - 5, 182, 10);
-      doc.text(item.name, 16, y + 2);
-      doc.text(String(item.quantity), 110, y + 2);
-      doc.text(formatPrice(item.price), 135, y + 2);
-      doc.text(formatPrice(item.price * item.quantity), 175, y + 2);
-      y += 10;
+      const formattedPrice = formatPrice(item.price);
+      const rupeeSymbol = formattedPrice.match(/[^\d.,\s]+/g)?.[0] || '';
+
+      if (rupeeSymbol === '₹') {
+        doc.rect(12, y - 5, 182, 10);
+        doc.text(item.name, 16, y + 2);
+        doc.text(String(item.quantity), 110, y + 2);
+        doc.text(`Rs. ${item.price}`, 135, y + 2);
+        doc.text(`Rs. ${item.price * item.quantity}`, 175, y + 2);
+        y += 10;
+      }
+      else {
+        doc.rect(12, y - 5, 182, 10);
+        doc.text(item.name, 16, y + 2);
+        doc.text(String(item.quantity), 110, y + 2);
+        doc.text(formatPrice(item.price), 135, y + 2);
+        doc.text(formatPrice(item.price * item.quantity), 175, y + 2);
+        y += 10;
+      }
     });
-  
+
+
     // Summary
     const summaryX = 130;
     y += 6;
     const discount = order.discount || 0;
     const shipping = order.deliveryCharges || deliveryCharges;
     const total = order.amount - discount + shipping;
-  
-    doc.setFontSize(11);
-    doc.text('SUBTOTAL:', summaryX, y);
-    doc.text(formatPrice(order.amount), 195, y, null, null, 'right');
-  
-    y += 7;
-    doc.text('DISCOUNT:', summaryX, y);
-    doc.text(formatPrice(discount), 195, y, null, null, 'right');
-  
-    y += 7;
-    doc.text('SHIPPING:', summaryX, y);
-    doc.text(formatPrice(shipping), 195, y, null, null, 'right');
-  
+
+    const formattedPrice = formatPrice(order.amount);
+    const rupeeSymbol = formattedPrice.match(/[^\d.,\s]+/g)?.[0] || '';
+
+    if (rupeeSymbol == '₹') {
+      doc.setFontSize(11);
+      doc.text('SUBTOTAL:', summaryX, y);
+      doc.text(`Rs. ${order.amount}`, 195, y, null, null, 'right');
+
+      y += 7;
+      doc.text('DISCOUNT:', summaryX, y);
+      doc.text(`Rs. ${discount}`, 195, y, null, null, 'right');
+
+      y += 7;
+      doc.text('SHIPPING:', summaryX, y);
+      doc.text(`Rs. ${shipping}`, 195, y, null, null, 'right');
+    }
+
+    else {
+      doc.setFontSize(11);
+      doc.text('SUBTOTAL:', summaryX, y);
+      doc.text(formatPrice(order.amount), 195, y, null, null, 'right');
+
+      y += 7;
+      doc.text('DISCOUNT:', summaryX, y);
+      doc.text(formatPrice(discount), 195, y, null, null, 'right');
+
+      y += 7;
+      doc.text('SHIPPING:', summaryX, y);
+      doc.text(formatPrice(shipping), 195, y, null, null, 'right');
+    }
+
     // Total Paid Box
     y += 10;
     doc.setFillColor(220, 240, 220);
     doc.rect(summaryX, y - 6, 70, 12, 'F');
     doc.setFontSize(13);
     doc.setTextColor(0, 100, 0);
-    doc.text('TOTAL PAID', summaryX + 2, y + 2);
-    doc.text(formatPrice(total), 195, y + 2, null, null, 'right');
-  
+
+    const formattedPrice1 = formatPrice(total);
+    const rupeeSymbol1 = formattedPrice1.match(/[^\d.,\s]+/g)?.[0] || '';
+
+    if (rupeeSymbol1 == '₹') {
+      doc.text('TOTAL PAID', summaryX + 2, y + 2);
+      doc.text(`Rs. ${total}`, 195, y + 2, null, null, 'right');
+    }
+    else {
+      doc.text('TOTAL PAID', summaryX + 2, y + 2);
+      doc.text(formatPrice(total), 195, y + 2, null, null, 'right');
+    }
+
+
     // Footer
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -179,12 +222,12 @@ const Orders = () => {
     doc.text('Thank you for trusting 3xizGuitars!', 14, y + 8);
     doc.text('For queries: 3xizguitars@gmail.com', 14, y + 14);
     doc.text('This is a computer-generated receipt and does not require a signature.', 14, y + 20);
-  
+
     // Outer Border
     doc.setDrawColor(180);
     doc.setLineWidth(0.5);
     doc.rect(8, 14, 194, y + 22);
-  
+
     // Save
     const customerName = `${addr.firstName}_${addr.lastName}`.replace(/\s+/g, '_');
     const receiptDate = new Date(order.date).toISOString().split('T')[0];
@@ -195,7 +238,7 @@ const Orders = () => {
     const orderDateTime = new Date(orderDate).getTime();
     const currentTime = new Date().getTime();
     const daysPassed = Math.floor((currentTime - orderDateTime) / (1000 * 60 * 60 * 24));
-    
+
     if (daysPassed < 1) return { status: 'Processing', color: 'text-blue-400' };
     if (daysPassed < 3) return { status: 'Shipped', color: 'text-yellow-400' };
     if (daysPassed < 5) return { status: 'In Transit', color: 'text-orange-400' };

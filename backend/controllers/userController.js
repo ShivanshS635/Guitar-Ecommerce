@@ -1,7 +1,74 @@
 import User from "../models/userModel.js";
 import validator from "validator";
 import bcryptjs from "bcryptjs";
-import jwt from "jsonwebtoken";
+import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
+
+export const resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id);
+  
+      if (!user) {
+        return res.json({ success: false, message: 'Invalid token or user not found' });
+      }
+  
+      const salt = await bcryptjs.genSalt(10);
+      const hashedPassword = await bcryptjs.hash(password, salt);
+  
+      user.password = hashedPassword;
+      await user.save();
+  
+      res.json({ success: true, message: 'Password reset successful' });
+    } catch (error) {
+      console.log(error);
+      res.json({ success: false, message: 'Invalid or expired token' });
+    }
+  };
+  
+
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.json({ success: false, message: 'User not found with this email' });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '10m' });
+
+    const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.ADMIN_EMAIL,
+        pass: process.env.ADMIN_APP_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: '3xizGuitars <noreply@guitarparts.com>',
+      to: email,
+      subject: 'Password Reset Request',
+      html: `
+        <p>Hi ${user.name},</p>
+        <p>You requested to reset your password. Click the link below:</p>
+        <a href="${resetLink}" target="_blank">Reset Password</a>
+        <p><strong>Note:</strong> This link expires in 10 minutes.</p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true, message: 'Reset link sent to your email' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: 'Server error' });
+  }
+};
+
 
 const createToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET);

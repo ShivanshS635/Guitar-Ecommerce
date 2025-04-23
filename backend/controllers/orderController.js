@@ -61,33 +61,6 @@ const placeOrderPaypal = async (req, res) => {
   }
 };
 
-// Placing Order Using GooglePay
-const placeOrderGpay = async (req, res) => {
-  try {
-    const { items, amount, address } = req.body;
-    const { userId } = req.user;
-
-    const orderData = {
-      userId,
-      items,
-      address,
-      amount,
-      paymentMethod: "gpay",
-      payment: true,
-      date: Date.now(),
-    };
-
-    const newOrder = new Order(orderData);
-    await newOrder.save();
-    await User.findByIdAndUpdate(userId, { cartData: {} });
-
-    res.json({ success: true, message: "Google Pay Order Placed" });
-  } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: error.message });
-  }
-};
-
 // Placing Order Using PhonePe
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -170,12 +143,32 @@ const placeOrderPhonePe = async (req, res) => {
   }
 };
 
-
 // Get All Orders For Admin
 const allOrders = async (req, res) => {
   try {
-    const allOrders = await Order.find({});
-    res.json({ success: true, allOrders });
+    const allOrders = await Order.find({}).lean();
+
+    // Collect unique userIds
+    const userIds = [...new Set(allOrders.map(order => order.userId))];
+    
+    // Fetch user info for those IDs
+    const users = await User.find({ _id: { $in: userIds } })
+      .select('name email _id')
+      .lean();
+
+    // Map userId to user data
+    const userMap = {};
+    users.forEach(user => {
+      userMap[user._id] = { name: user.name, email: user.email };
+    });
+
+    // Attach user info to each order
+    const enrichedOrders = allOrders.map(order => ({
+      ...order,
+      user: userMap[order.userId] || { name: 'Unknown', email: 'N/A' },
+    }));
+
+    res.json({ success: true, allOrders: enrichedOrders });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
@@ -197,17 +190,10 @@ const userOrders = async (req, res) => {
   }
 };
 
-// Update Order Status From Admin Panel
-const updateStatus = async (req, res) => {
-  // Code for updating order status (e.g., processing, shipped, delivered)
-};
-
 export {
   placeOrder,
   placeOrderPaypal,
-  placeOrderGpay,
   placeOrderPhonePe,
   allOrders,
   userOrders,
-  updateStatus,
 };

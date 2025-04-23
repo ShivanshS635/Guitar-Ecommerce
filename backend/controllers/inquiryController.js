@@ -100,7 +100,6 @@ export const sendInquiryMail = async (req, res) => {
   const userId = req.user?.userId;
 
   try {
-    // Validate required environment variables
     if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_APP_PASSWORD) {
       console.error('Missing email credentials in environment variables');
       return res.status(500).json({ 
@@ -132,8 +131,8 @@ export const sendInquiryMail = async (req, res) => {
 
     // 1. Send inquiry to admin
     const adminMailOptions = {
-      from: `"${name}" <${process.env.ADMIN_EMAIL}>`,
-      to: 'shivansh3375@gmail.com',
+      from: `"${name}" <${senderEmail}>`,
+      to: process.env.ADMIN_EMAIL,
       replyTo: senderEmail,
       subject: `New Inquiry: ${service}`,
       html: adminInquiryTemplate(name, phone, description, service, senderEmail),

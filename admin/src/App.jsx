@@ -11,7 +11,8 @@ import Edit from './pages/Edit.jsx'
 import AdminUpload from './pages/AdminUpload.jsx'
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL;
-export const currency = '$'
+export const currency = '₹'; // previously it was '$'
+
 
 const App = () => {
   const [token , setToken] = useState(localStorage.getItem('token') || '');

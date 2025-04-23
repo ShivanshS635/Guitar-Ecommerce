@@ -14,7 +14,7 @@ const PlaceOrder = () => {
   const cardStyle =
     'p-6 rounded-xl shadow-md border border-white/5 bg-gradient-to-br from-[#1b1b1b] via-[#121212] to-[#0d0d0d] text-yellow-100';
 
-  const { navigate, backendUrl, token, cartItems, setCartItems, getCartAmount, deliveryCharges, products } = useContext(ShopContext);
+  const { navigate, backendUrl, token, cartItems, setCartItems, formatPrice , getCartAmount, deliveryCharges, products } = useContext(ShopContext);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -70,7 +70,7 @@ const PlaceOrder = () => {
       const orderData = {
         address: formData,
         items: orderItems,
-        amount: getCartAmount() + deliveryCharges,
+        amount: formatPrice(getCartAmount()) + deliveryCharges,
         date: Date.now(),
       };
 
@@ -96,89 +96,88 @@ const PlaceOrder = () => {
   };
 
   useEffect(() => {
-    if (method === 'paypal' && window.paypal && paypalRef.current) {
+    if (
+      method === 'paypal' &&
+      window.paypal &&
+      paypalRef.current &&
+      paypalRef.current.childElementCount === 0
+    ) {
+      const rawAmt = formatPrice(getCartAmount()) + deliveryCharges;
+      const amt = (rawAmt + '').replace(/[$,]/g, ''); // remove $ and commas
+      const amtt = parseFloat(Number(amt).toFixed(2));
+
+      console.log(amtt)
       if (!isFormValid()) {
         toast.error('Please fill in all the delivery information before proceeding with PayPal payment.');
         return;
       }
-      window.paypal.Buttons({
-        createOrder: (data, actions) => {
-          return actions.order.create({
-            purchase_units: [
-              {
-                amount: {
-                  value: (getCartAmount() + deliveryCharges).toFixed(2),
+
+  
+      window.paypal
+        .Buttons({
+          createOrder: (data, actions) => {
+            return actions.order.create({
+              purchase_units: [
+                {
+                  amount: {
+                    value: amtt,
+                    currency_code: 'USD',
+                  },
                 },
-              },
-            ],
-          });
-        },
-        onApprove: async (data, actions) => {
-          const paymentResult = await actions.order.capture();
-
-          try {
-            let orderItems = [];
-
-            for (const itemId in cartItems) {
-              const quantity = cartItems[itemId];
-              const product = products.find((product) => product._id === itemId);
-              if (product && quantity > 0) {
-                const itemInfo = structuredClone(product);
-                itemInfo.quantity = quantity;
-                orderItems.push(itemInfo);
+              ],
+            });
+          },
+  
+          onApprove: async (data, actions) => {
+            const paymentResult = await actions.order.capture();
+  
+            try {
+              const orderItems = Object.entries(cartItems)
+                .filter(([id, qty]) => qty > 0)
+                .map(([id, qty]) => {
+                  const product = products.find((p) => p._id === id);
+                  return product ? { ...structuredClone(product), quantity: qty } : null;
+                })
+                .filter(Boolean);
+  
+              const orderData = {
+                address: formData,
+                items: orderItems,
+                amount: getCartAmount() + deliveryCharges,
+                date: Date.now(),
+                paymentResult,
+              };
+  
+              const res = await axios.post(`${backendUrl}/api/order/paypal`, orderData, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+  
+              if (res.data.success) {
+                setCartItems({});
+                setShowOverlay(true);
+                setTimeout(() => {
+                  setShowOverlay(false);
+                  navigate('/orders');
+                }, 5000);
+              } else {
+                toast.error(res.data.message || 'Something went wrong');
               }
+            } catch (error) {
+              console.error(error);
+              toast.error('Payment failed. Please try again.');
             }
-
-            const orderData = {
-              address: formData,
-              items: orderItems,
-              amount: getCartAmount() + deliveryCharges,
-              date: Date.now(),
-              paymentResult,
-            };
-
-            const res = await axios.post(`${backendUrl}/api/order/paypal`, orderData, {headers:{ Authorization: `Bearer ${token}`}});
-
-            if (res.data.success) {
-              setCartItems({});
-              setShowOverlay(true);
-              setTimeout(() => {
-                setShowOverlay(false);
-                navigate('/orders');
-              }, 5000);
-            } else {
-              toast.error(res.data.message);
-            }
-          } catch (error) {
-            toast.error('Payment failed');
-            console.log(error);
-          }
-        },
-        onError: (err) => {
-          toast.error('PayPal error');
-          console.log(err);
-        },
-      }).render(paypalRef.current);
+          },
+  
+          onError: (err) => {
+            console.error('PayPal Error:', err);
+            toast.error('PayPal error occurred.');
+          },
+        })
+        .render(paypalRef.current);
     }
-  }, [method, formData]);
+  }, [method, formData, cartItems, products]);
 
-      const phonepe = async () => {
-      axios.post(`${backendUrl}/api/order/phonepe`, { amount: getCartAmount() + deliveryCharges }, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        if (res.data.checkoutPageUrl) {
-          window.location.href = res.data.checkoutPageUrl; // Redirect to PhonePe's checkout URL
-        } else {
-          toast.error('PhonePe Payment initiation failed.');
-        }
-      })
-      .catch((err) => {
-        toast.error('PhonePe Payment initiation failed.');
-        console.log(err);
-      });
-    }
-
+  
   return (
     <>
       {showOverlay && <OrderSuccessOverlay />}

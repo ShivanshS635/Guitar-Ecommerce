@@ -18,6 +18,8 @@ const PlaceOrder = lazy(() => import('./pages/PlaceOrder'));
 const Orders = lazy(() => import('./pages/Orders'));
 const Reviews = lazy(() => import('./pages/Reviews'));
 const Gallery = lazy(() => import('./pages/Gallery'));
+const ForgotPassword = lazy (() => import( './pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 
 const App = () => {
   const location = useLocation();
@@ -51,6 +53,8 @@ const App = () => {
               <Route path="/product/:id" element={<Product />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path='/reset-password/:token' element = {<ResetPassword/>}/>
               <Route path="/place-order" element={<PlaceOrder />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/reviews" element={<Reviews />} />

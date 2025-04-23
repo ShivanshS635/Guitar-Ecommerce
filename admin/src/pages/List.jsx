@@ -53,7 +53,7 @@ const List = ({ token }) => {
 
   return (
     <div className="space-y-8 text-gray-700 px-2 sm:px-4">
-      <h2 className="text-2xl font-bold text-black mb-4">All Products (By Category)</h2>
+      <h2 className="text-2xl font-bold text-black mb-4">All Products</h2>
 
       {Object.entries(groupedByCategory).map(([category, products]) => (
         <div key={category} className="bg-white rounded-xl border border-gray-200 shadow">

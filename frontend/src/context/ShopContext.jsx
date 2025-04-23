@@ -21,34 +21,33 @@ const ShopContextProvider = (props) => {
   const fetchConversionRates = async () => {
     try {
       const res = await axios.get(
-        'https://api.exchangerate.host/latest?base=INR',
+        'https://api.exchangerate.host/latest?access_key=e920212a1cd5b9017faec20a15fb1b6c',
         {
-          timeout: 5000, // 5 second timeout
           headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
         }
       );
-      if (res.data.success) {
-        setCurrencyRates(res.data.rates);
-      } else {
-        toast.error("Failed to fetch currency rates.");
+
+      if (res.data && res.data.success) {
+        const rates = res.data.rates;
+        const inrRate = rates['INR'];
+
         setCurrencyRates({
           INR: 1,
-          USD: 0.012,
-          EUR: 0.011,
-          GBP: 0.0095
+          USD: (rates['USD'] / inrRate).toFixed(4),
+          EUR: (rates['EUR'] / inrRate).toFixed(4),
+          GBP: (rates['GBP'] / inrRate).toFixed(4),
         });
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Error fetching currency rates.");
+      toast.error("Could not fetch live exchange rates.");
       setCurrencyRates({
         INR: 1,
         USD: 0.012,
         EUR: 0.011,
-        GBP: 0.0095
+        GBP: 0.0095,
       });
     }
   };
@@ -56,7 +55,7 @@ const ShopContextProvider = (props) => {
   const formatPrice = (priceInINR) => {
     const exchangeRate = currencyRates[selectedCurrency] || 1;
     const convertedPrice = priceInINR * exchangeRate;
-    
+
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency: selectedCurrency,
@@ -68,7 +67,6 @@ const ShopContextProvider = (props) => {
   const getProducts = async () => {
     try {
       const res = await axios.get(backendUrl + "/api/product/list");
-      console.log(res.data.products)
       if (res.data.success) {
         const productsWithOriginalPrices = res.data.products.map(product => ({
           ...product,
@@ -101,24 +99,24 @@ const ShopContextProvider = (props) => {
       getUserCart(localStorage.getItem("token"));
     }
   }, [token]);
-  
+
   useEffect(() => {
     fetchConversionRates();
   }, []);
-  
+
   useEffect(() => {
     if (Object.keys(currencyRates).length > 0) {
       getProducts();
     }
   }, [currencyRates, selectedCurrency]);
-  
+
   useEffect(() => {
     if (!token && localStorage.getItem("token")) {
       setToken(localStorage.getItem("token"));
       getUserCart(localStorage.getItem("token"));
     }
   }, [token]);
-  
+
   const addToCart = async (itemId) => {
     let cartData = structuredClone(cartItems);
     if (cartData) {
@@ -128,7 +126,7 @@ const ShopContextProvider = (props) => {
       cartData[itemId] = 1;
     }
     setCartItems(cartData);
-  
+
     if (token) {
       try {
         await axios.post(
@@ -142,7 +140,7 @@ const ShopContextProvider = (props) => {
       }
     }
   };
-  
+
   const getCartCount = () => {
     let count = 0;
     for (let item in cartItems) {
@@ -150,7 +148,7 @@ const ShopContextProvider = (props) => {
     }
     return count;
   };
-  
+
   const updateQuantity = async (itemId, quantity) => {
     let cartData = structuredClone(cartItems);
     if (cartData) {
@@ -158,7 +156,7 @@ const ShopContextProvider = (props) => {
       else cartData[itemId] = quantity;
     }
     setCartItems(cartData);
-  
+
     if (token) {
       try {
         await axios.post(
@@ -172,7 +170,7 @@ const ShopContextProvider = (props) => {
       }
     }
   };
-  
+
   const getCartAmount = () => {
     let total = 0;
     for (let item in cartItems) {
@@ -183,7 +181,7 @@ const ShopContextProvider = (props) => {
     }
     return total;
   };
-  
+
   const getUserCart = async (token) => {
     try {
       const resp = await axios.post(

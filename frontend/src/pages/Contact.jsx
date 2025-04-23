@@ -1,8 +1,41 @@
-import React from 'react';
+import React, { useContext, useState } from 'react';
+import axios from 'axios';
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { ShopContext } from '../context/ShopContext';
 
 const Contact = () => {
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const {backendUrl} = useContext(ShopContext)
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!form.name || !form.email || !form.message) {
+      toast.error('Please fill out all fields');
+      return;
+    }
+
+    try {
+      const res = await axios.post(`${backendUrl}/api/contact/send`, form);
+      if (res.data.success) {
+        toast.success('📬 Message sent successfully!');
+        setForm({ name: '', email: '', message: '' });
+      } else {
+        toast.error('❌ Failed to send message.');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('🚫 Something went wrong. Please try again.');
+    }
+  };
+
   return (
     <div className="bg-neutral-900 text-neutral-300 px-4 sm:px-10 md:px-16 lg:px-24 py-10 space-y-24">
       
@@ -35,22 +68,31 @@ const Contact = () => {
       {/* Contact Form */}
       <div data-aos="zoom-in-up">
         <Title text1="Send" text2="Message" />
-        <form className="grid gap-6 mt-10 md:grid-cols-2">
+        <form onSubmit={handleSubmit} className="grid gap-6 mt-10 md:grid-cols-2">
           <input
             type="text"
+            name="name"
             placeholder="Your Name"
+            value={form.name}
+            onChange={handleChange}
             className="col-span-2 md:col-span-1 p-3 rounded-lg bg-neutral-800 text-white border border-neutral-700"
             required
           />
           <input
             type="email"
+            name="email"
             placeholder="Your Email"
+            value={form.email}
+            onChange={handleChange}
             className="col-span-2 md:col-span-1 p-3 rounded-lg bg-neutral-800 text-white border border-neutral-700"
             required
           />
           <textarea
+            name="message"
             rows="5"
             placeholder="Your Message"
+            value={form.message}
+            onChange={handleChange}
             className="col-span-2 p-3 rounded-lg bg-neutral-800 text-white border border-neutral-700"
             required
           ></textarea>
