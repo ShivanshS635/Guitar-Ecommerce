@@ -39,31 +39,12 @@ const ShopContextProvider = ({ children }) => {
 
   // Fetch currency rates with error handling
   const fetchConversionRates = useCallback(async () => {
-    try {
-      const res = await axios.get(
-        "https://api.exchangerate.host/latest?base=INR",
-        {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          timeout: 5000, // Add timeout
-        }
-      );
-
-      if (res.data?.success) {
-        setCurrencyRates(res.data.rates);
-      }
-    } catch (error) {
-      console.error("Currency fetch error:", error);
-      toast.error("Could not fetch live exchange rates. Using default rates.");
       setCurrencyRates({
         INR: 1,
         USD: 0.012,
         EUR: 0.011,
         GBP: 0.0095,
       });
-    }
   }, []);
 
   // Fetch products with loading state

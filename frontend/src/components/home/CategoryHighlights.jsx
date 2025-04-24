@@ -5,6 +5,7 @@ import Title from '../../components/Title.jsx';
 import axios from 'axios';
 import { useContext } from 'react';
 import { ShopContext } from '../../context/ShopContext';
+import { toast } from 'react-toastify';
 
 const categories = [
   { title: 'Custom Bodies', img: assets.body1 },
@@ -45,19 +46,16 @@ const CategoryHighlights = () => {
           headers: { Authorization: `Bearer ${token}`},
         }
       );
-      console.log('third')
-
 
       if (res.data.success) {
-        alert('Inquiry sent successfully!');
         setFormData({ name: '', phone: '', description: '' });
         setIsModalOpen(false);
+        toast.success('Inquiry Sent Sucessfully');
       } else {
         alert('Failed to send inquiry');
       }
     } catch (error) {
-      console.error(error);
-      alert('Error sending inquiry');
+      toast.error('Error sending inquiry' + error.response.data.message);
     }
   };
 

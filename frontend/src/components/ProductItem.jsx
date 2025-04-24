@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 const ProductItem = ({ id, img, name, price, listView = false }) => {
   const { formatPrice } = useContext(ShopContext);
 
+  console.log(formatPrice(price))
+
   return (
     <motion.div
       whileHover={{ scale: 1.03 }}
