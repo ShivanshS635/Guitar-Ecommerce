@@ -1,4 +1,5 @@
 import express from 'express';
+import upload from '../middlewares/multer.js';
 import {
   submitReview,
   getAllReviews,
@@ -14,7 +15,7 @@ const router = express.Router();
 router.post('/submit', authUser, submitReview);
 router.post('/text', authUser, submitTextReview);
 router.get('/all', getAllReviews);
-router.post('/upload-image', authUser, uploadScreenshot);
+router.post('/upload-image', upload.single('image'), uploadScreenshot);
 router.get('/screenshots', getScreenshots);
 router.get('/textReviews' , getTextReviews);
 

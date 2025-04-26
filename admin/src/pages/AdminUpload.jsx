@@ -42,9 +42,15 @@ const AdminUpload = ({ token }) => {
   const handleScreenshotUpload = async (e) => {
     e.preventDefault();
     if (!file) return toast.error('Please select an image.');
+  
+    // Validate file size (e.g., 5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error('File too large (max 5MB)');
+    }
+  
     const formData = new FormData();
     formData.append('image', file);
-
+  
     try {
       const res = await axios.post(
         `${backendUrl}/api/reviews/upload-image`,
@@ -54,8 +60,10 @@ const AdminUpload = ({ token }) => {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
           },
+          timeout: 60000, // 60 second timeout
         }
       );
+      
       if (res.data.success) {
         toast.success('Screenshot uploaded!');
         setFile(null);
@@ -64,7 +72,8 @@ const AdminUpload = ({ token }) => {
         toast.error(res.data.message);
       }
     } catch (error) {
-      toast.error('Failed to upload screenshot.');
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload screenshot.');
     }
   };
 

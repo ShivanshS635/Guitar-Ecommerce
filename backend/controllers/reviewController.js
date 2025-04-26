@@ -103,14 +103,24 @@ export const getAllReviews = async (req, res) => {
 
 export const uploadScreenshot = async (req, res) => {
   try {
-    const file = req.files?.image;
-    if (!file) {
-      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No file uploaded' 
+      });
     }
 
-    const uploaded = await cloudinary.uploader.upload(file.tempFilePath, {
+    console.log('Starting upload for:', req.file.path);
+
+    // Upload with retry and longer timeout
+    const uploaded = await cloudinary.uploader.upload(req.file.path, {
       folder: 'review_screenshots',
+      resource_type: 'auto',
+      chunk_size: 6000000,
+      timeout: 60000
     });
+
+    console.log('Upload successful:', uploaded.secure_url);
 
     const newScreenshot = new Screenshot({
       imageUrl: uploaded.secure_url,
@@ -119,10 +129,23 @@ export const uploadScreenshot = async (req, res) => {
 
     await newScreenshot.save();
 
-    res.json({ success: true, message: 'Screenshot uploaded', screenshot: newScreenshot });
+    return res.json({ 
+      success: true, 
+      message: 'Screenshot uploaded', 
+      screenshot: newScreenshot 
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Upload failed:', err);
+
+    const errorMessage = err.http_code === 499 
+      ? 'Upload took too long. Try a smaller file or better connection.'
+      : 'Failed to upload screenshot';
+
+    return res.status(500).json({ 
+      success: false, 
+      message: errorMessage 
+    });
   }
 };
 
