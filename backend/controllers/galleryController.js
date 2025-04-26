@@ -66,14 +66,7 @@ const addGalleryImages = async (req, res) => {
     // Save to database
     const savedImages = await Gallery.insertMany(successfulUploads);
 
-    // Clean up temp files
-    req.files.forEach(file => {
-      try {
-        fs.unlinkSync(file.path);
-      } catch (err) {
-        console.error(`Error deleting ${file.path}:`, err);
-      }
-    });
+
 
     res.status(201).json({
       success: true,
@@ -84,16 +77,6 @@ const addGalleryImages = async (req, res) => {
   } catch (error) {
     console.error('Upload error:', error);
     
-    // Clean up on error
-    if (req.files) {
-      req.files.forEach(file => {
-        try {
-          fs.unlinkSync(file.path);
-        } catch (err) {
-          console.error(`Error cleaning up ${file.path}:`, err);
-        }
-      });
-    }
 
     res.status(500).json({
       success: false,
@@ -129,30 +112,25 @@ const deleteGalleryImage = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Find the image first to get Cloudinary public_id
-    const image = await Gallery.findById(id);
-    if (!image) {
+    // Delete from database only
+    const deletedImage = await Gallery.findByIdAndDelete(id);
+    
+    if (!deletedImage) {
       return res.status(404).json({
         success: false,
-        message: 'Image not found'
+        message: 'Image not found in gallery'
       });
     }
 
-    // Delete from Cloudinary
-    await cloudinary.uploader.destroy(image.publicId);
-
-    // Delete from database
-    await Gallery.findByIdAndDelete(id);
-
     res.json({
       success: true,
-      message: 'Image deleted successfully'
+      message: 'Image removed from gallery successfully'
     });
   } catch (error) {
-    console.error('Error deleting gallery image:', error);
+    console.error('Error removing image from gallery:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete image'
+      message: 'Failed to remove image from gallery'
     });
   }
 };

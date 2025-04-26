@@ -7,6 +7,8 @@ import {
   getScreenshots,
   submitTextReview,
   getTextReviews,
+  deleteYoutubeReview,
+  deleteScreenshot
 } from '../controllers/reviewController.js';
 import authUser from '../middlewares/auth.js';
 
@@ -18,5 +20,7 @@ router.get('/all', getAllReviews);
 router.post('/upload-image', upload.single('image'), uploadScreenshot);
 router.get('/screenshots', getScreenshots);
 router.get('/textReviews' , getTextReviews);
+router.delete('/youtube/:id', authUser, deleteYoutubeReview);
+router.delete('/screenshots/:id', authUser, deleteScreenshot);
 
 export default router;

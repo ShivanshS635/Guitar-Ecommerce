@@ -157,3 +157,53 @@ export const getScreenshots = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const deleteYoutubeReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedReview = await Youtube.findByIdAndDelete(id);
+    
+    if (!deletedReview) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'YouTube review not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'YouTube review deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Error deleting YouTube review:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete YouTube review' 
+    });
+  }
+};
+
+export const deleteScreenshot = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedScreenshot = await Screenshot.findByIdAndDelete(id);
+    
+    if (!deletedScreenshot) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Screenshot not found' 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Screenshot deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Error deleting screenshot:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete screenshot' 
+    });
+  }
+};
