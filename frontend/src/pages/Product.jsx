@@ -1,10 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
-import { assets } from '../assets/assets';
-import RelatedProducts from '../components/RelatedProducts';
+import { FiShoppingCart, FiCheck, FiStar, FiChevronLeft, FiLoader } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiShoppingCart, FiCheck, FiStar, FiChevronLeft } from 'react-icons/fi';
+import RelatedProducts from '../components/RelatedProducts';
 
 const Product = () => {
   const { id } = useParams();
@@ -16,61 +15,58 @@ const Product = () => {
   const [loading, setLoading] = useState(true);
   const [addedToCart, setAddedToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [imageLoading, setImageLoading] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const handleImageLoad = () => setImageLoaded(true);
+
+  // Memoized product finder
+  const findProduct = useCallback(() => {
+    return products.find((item) => item._id === id);
+  }, [products, id]);
 
   useEffect(() => {
     setLoading(true);
     if (products.length > 0) {
-      const foundProduct = products.find((item) => item._id === id);
+      const foundProduct = findProduct();
       if (foundProduct) {
         setProductData(foundProduct);
         setSelectedImage(foundProduct.img?.[0] || '');
       }
       setLoading(false);
     }
-  }, [products, id]);
+  }, [products, id, findProduct]);
 
   const handleAddToCart = () => {
     if (!productData) return;
 
-    // Add multiple quantities if specified
-    for (let i = 0; i < quantity; i++) {
-      addToCart(productData._id);
-    }
-
+    addToCart(productData._id, quantity);
     setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+    
+    const timer = setTimeout(() => setAddedToCart(false), 2000);
+    return () => clearTimeout(timer);
   };
 
-  const handleImageLoad = () => {
-    setImageLoading(false);
-  };
-
-  const renderStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<FiStar key={`full-${i}`} className="text-yellow-400 fill-current w-4 h-4" />);
-    }
-
-    if (hasHalfStar) {
-      stars.push(<FiStar key="half" className="text-yellow-400 w-4 h-4" />);
-    }
-
-    const emptyStars = 5 - stars.length;
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(<FiStar key={`empty-${i}`} className="text-gray-300 w-4 h-4" />);
-    }
-
-    return stars;
-  };
+  const renderStars = useCallback((rating) => {
+    return Array(5).fill(0).map((_, i) => {
+      const starValue = i + 1;
+      return (
+        <FiStar
+          key={i}
+          className={`w-4 h-4 ${
+            starValue <= Math.floor(rating)
+              ? 'text-yellow-400 fill-current'
+              : rating >= starValue - 0.5 && rating < starValue
+              ? 'text-yellow-400'
+              : 'text-gray-300'
+          }`}
+        />
+      );
+    });
+  }, []);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-yellow-400"></div>
+        <FiLoader className="animate-spin w-12 h-12 text-yellow-400" />
       </div>
     );
   }
@@ -102,6 +98,7 @@ const Product = () => {
       <button
         onClick={() => navigate(-1)}
         className="flex items-center text-gray-600 hover:text-black mb-6 transition-colors"
+        aria-label="Go back"
       >
         <FiChevronLeft className="mr-1" /> Back
       </button>
@@ -112,33 +109,36 @@ const Product = () => {
           {/* Thumbnails */}
           <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-y-auto sm:w-24 pb-2 sm:pb-0">
             {productData.img?.map((item, index) => (
-              <motion.div
+              <motion.button
                 key={index}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex-shrink-0"
+                className="flex-shrink-0 focus:outline-none"
+                onClick={() => {
+                  setSelectedImage(item);
+                  handleImageLoad();
+                }}
+                aria-label={`View image ${index + 1}`}
               >
                 <img
                   src={item}
-                  onClick={() => {
-                    setSelectedImage(item);
-                    setImageLoading(true);
-                  }}
-                  className={`w-16 h-16 sm:w-full sm:h-20 object-cover cursor-pointer rounded border transition-all duration-200 ${selectedImage === item
+                  className={`w-16 h-16 sm:w-full sm:h-20 object-cover rounded border transition-all duration-200 ${
+                    selectedImage === item
                       ? 'ring-2 ring-yellow-500 border-yellow-500'
                       : 'border-gray-200 hover:border-yellow-400'
-                    }`}
+                  }`}
                   alt={`Thumbnail ${index + 1}`}
+                  loading="lazy"
                 />
-              </motion.div>
+              </motion.button>
             ))}
           </div>
 
           {/* Main Image */}
           <div className="relative w-full sm:w-[calc(100%-6rem)] aspect-square bg-gray-50 rounded-xl overflow-hidden">
-            {imageLoading && (
+            {!imageLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-400"></div>
+                <FiLoader className="animate-spin w-8 h-8 text-yellow-400" />
               </div>
             )}
             <motion.img
@@ -146,30 +146,30 @@ const Product = () => {
               alt={productData.name}
               className="w-full h-full object-contain"
               initial={{ opacity: 0 }}
-              animate={{ opacity: imageLoading ? 0 : 1 }}
+              animate={{ opacity: imageLoaded ? 1 : 0 }}
               transition={{ duration: 0.3 }}
               onLoad={handleImageLoad}
+              loading="eager"
             />
           </div>
         </div>
 
         {/* Product Info Section */}
         <div className="flex-1">
-          <motion.h1
-            className="text-2xl md:text-3xl font-bold text-yellow-500"
+          <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
           >
-            {productData.name}
-          </motion.h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-yellow-500">
+              {productData.name}
+            </h1>
 
-
-          <div className="flex items-center mt-3">
-            <div className="flex mr-2">
-              {renderStars(4.5)}
+            <div className="flex items-center mt-3">
+              <div className="flex mr-2">{renderStars(productData.rating || 4.5)}</div>
+              
             </div>
-          </div>
+          </motion.div>
 
           <motion.div
             className="mt-6"
@@ -183,19 +183,29 @@ const Product = () => {
             {productData.originalPrice && (
               <div className="text-lg text-gray-500 line-through">
                 {formatPrice(productData.originalPrice)}
+                <span className="ml-2 text-sm bg-red-100 text-red-600 px-2 py-1 rounded">
+                  {Math.round(
+                    ((productData.originalPrice - productData.price) /
+                      productData.originalPrice *
+                      100
+                  ))}
+                  % OFF
+                </span>
               </div>
             )}
           </motion.div>
 
-
-          <motion.p
-            className="mt-6 text-gray-700 leading-relaxed"
+          <motion.div
+            className="mt-6"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            {productData.description}
-          </motion.p>
+            <h3 className="font-medium text-lg mb-2">Description</h3>
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+              {productData.description}
+            </p>
+          </motion.div>
 
           {productData.specifications && (
             <motion.div
@@ -225,14 +235,16 @@ const Product = () => {
             <div className="flex items-center border border-gray-200 rounded-lg">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                className="px-3 py-2 text-gray-600 hover:bg-gray-100 focus:outline-none"
+                aria-label="Decrease quantity"
               >
                 -
               </button>
               <span className="px-4 py-2">{quantity}</span>
               <button
                 onClick={() => setQuantity(quantity + 1)}
-                className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                className="px-3 py-2 text-gray-600 hover:bg-gray-100 focus:outline-none"
+                aria-label="Increase quantity"
               >
                 +
               </button>
@@ -241,10 +253,12 @@ const Product = () => {
             <button
               onClick={handleAddToCart}
               disabled={addedToCart}
-              className={`flex items-center justify-center gap-2 px-8 py-3 rounded-lg transition-all duration-300 shadow-sm ${addedToCart
+              className={`flex items-center justify-center gap-2 px-8 py-3 rounded-lg transition-all duration-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 ${
+                addedToCart
                   ? 'bg-green-600 hover:bg-green-700 text-white'
                   : 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                }`}
+              }`}
+              aria-label={addedToCart ? 'Added to cart' : 'Add to cart'}
             >
               {addedToCart ? (
                 <>
@@ -254,7 +268,7 @@ const Product = () => {
               ) : (
                 <>
                   <FiShoppingCart className="w-5 h-5" />
-                  Add to Cart ({quantity})
+                  Add to Cart
                 </>
               )}
             </button>
@@ -267,42 +281,34 @@ const Product = () => {
             transition={{ delay: 0.6 }}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div className="flex items-start">
-                <div className="bg-yellow-100 p-2 rounded-full mr-3">
-                  <FiCheck className="text-yellow-600 w-4 h-4" />
+              {[
+                {
+                  title: 'Authentic Products',
+                  description: '100% original products',
+                },
+                {
+                  title: 'Easy Returns',
+                  description: '7-day return policy',
+                },
+                {
+                  title: 'Free Shipping',
+                  description: 'On all orders',
+                },
+                {
+                  title: 'Secure Payments',
+                  description: 'SSL encrypted',
+                },
+              ].map((item, index) => (
+                <div key={index} className="flex items-start">
+                  <div className="bg-yellow-100 p-2 rounded-full mr-3">
+                    <FiCheck className="text-yellow-600 w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{item.title}</h4>
+                    <p className="text-gray-500">{item.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-medium">Authentic Products</h4>
-                  <p className="text-gray-500">100% original products</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <div className="bg-yellow-100 p-2 rounded-full mr-3">
-                  <FiCheck className="text-yellow-600 w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Easy Returns</h4>
-                  <p className="text-gray-500">7-day return policy</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <div className="bg-yellow-100 p-2 rounded-full mr-3">
-                  <FiCheck className="text-yellow-600 w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Free Shipping</h4>
-                  <p className="text-gray-500">On all orders</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <div className="bg-yellow-100 p-2 rounded-full mr-3">
-                  <FiCheck className="text-yellow-600 w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Secure Payments</h4>
-                  <p className="text-gray-500">SSL encrypted</p>
-                </div>
-              </div>
+              ))}
             </div>
           </motion.div>
         </div>
@@ -316,7 +322,10 @@ const Product = () => {
         className="mt-16"
       >
         <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
-        <RelatedProducts category={productData.category} currentProductId={productData._id} />
+        <RelatedProducts 
+          category={productData.category} 
+          currentProductId={productData._id} 
+        />
       </motion.div>
 
       {/* Success Notification */}
@@ -326,12 +335,12 @@ const Product = () => {
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
-            className="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50"
+            className="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2"
+            role="alert"
+            aria-live="assertive"
           >
-            <div className="flex items-center gap-2">
-              <FiCheck className="w-5 h-5" />
-              <span>Added to cart successfully!</span>
-            </div>
+            <FiCheck className="w-5 h-5" />
+            <span>Added {quantity} item{quantity > 1 ? 's' : ''} to cart successfully!</span>
           </motion.div>
         )}
       </AnimatePresence>

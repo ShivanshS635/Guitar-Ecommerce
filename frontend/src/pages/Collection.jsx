@@ -7,6 +7,12 @@ import ProductItem from '../components/ProductItem';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
+const CATEGORIES = {
+  Body: { label: 'Body', subcategories: ['Strat', 'Tele'] },
+  Neck: { label: 'Neck', subcategories: ['Strat', 'Tele'] },
+  GuitarKits: { label: 'Guitar Kits', subcategories: ['Strat', 'Tele'] },
+};
+
 const Collection = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -16,6 +22,7 @@ const Collection = () => {
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState(initialCategory ? [initialCategory] : []);
+  const [selectedSubcategories, setSelectedSubcategories] = useState([]);
   const [sortType, setSortType] = useState('relavent');
   const [gridView, setGridView] = useState(true);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -28,18 +35,25 @@ const Collection = () => {
   useEffect(() => {
     let results = [...products];
 
+    // Filter by category
     if (selectedCategories.length > 0) {
       results = results.filter(item => selectedCategories.includes(item.category));
+    }
+
+    // Filter by subcategory
+    if (selectedSubcategories.length > 0) {
+      results = results.filter(item => selectedSubcategories.includes(item.subcategory));
     }
 
     results = sortProducts(results);
     setFilteredProducts(results);
     updateActiveFilterCount();
-  }, [products, selectedCategories, sortType]);
+  }, [products, selectedCategories, selectedSubcategories, sortType]);
 
   const updateActiveFilterCount = () => {
     let count = 0;
     if (selectedCategories.length > 0) count += selectedCategories.length;
+    if (selectedSubcategories.length > 0) count += selectedSubcategories.length;
     if (sortType !== 'relavent') count += 1;
     setActiveFilterCount(count);
   };
@@ -63,20 +77,35 @@ const Collection = () => {
     );
   };
 
+  const toggleSubcategory = (subcategory) => {
+    setSelectedSubcategories(prev =>
+      prev.includes(subcategory)
+        ? prev.filter(item => item !== subcategory)
+        : [...prev, subcategory]
+    );
+  };
+
   const resetFilters = () => {
     setSelectedCategories([]);
+    setSelectedSubcategories([]);
     setSortType('relavent');
   };
 
-  const categoriesWithCount = products.reduce((acc, product) => {
-    const existing = acc.find(item => item.name === product.category);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      acc.push({ name: product.category, count: 1 });
-    }
-    return acc;
-  }, []);
+  // Get category counts with their subcategories
+  const categoriesWithSubcategories = Object.entries(CATEGORIES).map(([key, value]) => {
+    const count = products.filter(p => p.category === key).length;
+    const subcategoryCounts = value.subcategories.map(sub => ({
+      name: sub,
+      count: products.filter(p => p.subcategory === sub && p.category === key).length
+    }));
+    
+    return {
+      name: key,
+      label: value.label,
+      count,
+      subcategories: subcategoryCounts
+    };
+  });
 
   return (
     <div className="bg-[#0d0d0d] text-white min-h-screen">
@@ -90,35 +119,69 @@ const Collection = () => {
                 <img src={assets.close} alt="close" className="h-6 w-6 invert" />
               </button>
             </div>
-            <div>
-              <h3 className="text-gray-300 mb-2">Categories</h3>
-              <div className="space-y-3">
-                {categoriesWithCount.map(category => (
-                  <div key={category.name} className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      <button
-                        onClick={() => toggleCategory(category.name)}
-                        className={`w-5 h-5 border rounded flex items-center justify-center ${
-                          selectedCategories.includes(category.name)
-                            ? 'bg-yellow-400 border-yellow-400'
-                            : 'border-gray-500'
-                        }`}
-                      >
-                        {selectedCategories.includes(category.name) && (
-                          <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
-                            <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </button>
-                      <span className="ml-3 text-sm text-gray-300">{category.name}</span>
+            
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-gray-300 mb-2">Categories</h3>
+                <div className="space-y-4">
+                  {categoriesWithSubcategories.map(category => (
+                    <div key={category.name}>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => toggleCategory(category.name)}
+                            className={`w-5 h-5 border rounded flex items-center justify-center ${
+                              selectedCategories.includes(category.name)
+                                ? 'bg-yellow-400 border-yellow-400'
+                                : 'border-gray-500'
+                            }`}
+                          >
+                            {selectedCategories.includes(category.name) && (
+                              <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
+                                <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </button>
+                          <span className="ml-3 text-sm text-gray-300">{category.label}</span>
+                        </div>
+                        <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">{category.count}</span>
+                      </div>
+                      
+                      {/* Subcategories for this category */}
+                      {selectedCategories.includes(category.name) && (
+                        <div className="ml-8 mt-2 space-y-3">
+                          {category.subcategories.map(subcategory => (
+                            <div key={subcategory.name} className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                <button
+                                  onClick={() => toggleSubcategory(subcategory.name)}
+                                  className={`w-5 h-5 border rounded flex items-center justify-center ${
+                                    selectedSubcategories.includes(subcategory.name)
+                                      ? 'bg-yellow-400 border-yellow-400'
+                                      : 'border-gray-500'
+                                  }`}
+                                >
+                                  {selectedSubcategories.includes(subcategory.name) && (
+                                    <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
+                                      <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  )}
+                                </button>
+                                <span className="ml-3 text-sm text-gray-300">{subcategory.name}</span>
+                              </div>
+                              <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">{subcategory.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">{category.count}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
+
               <button
                 onClick={resetFilters}
-                className="mt-6 w-full bg-yellow-400 text-black rounded-md py-2 font-medium hover:bg-yellow-500"
+                className="w-full bg-yellow-400 text-black rounded-md py-2 font-medium hover:bg-yellow-500"
               >
                 Reset all filters
               </button>
@@ -175,35 +238,66 @@ const Collection = () => {
         {/* Content */}
         <div className="pt-6 pb-12 flex gap-10">
           {/* Desktop Filters */}
-          <aside className="hidden lg:block w-64 shrink-0 sticky ">
+          <aside className="hidden lg:block w-64 shrink-0 sticky">
             <div className="sticky top-64 space-y-6">
               <div className="border-b border-gray-700 pb-6">
                 <h3 className="text-gray-300 font-medium mb-3">Categories</h3>
-                <div className="space-y-3">
-                  {categoriesWithCount.map(category => (
-                    <div key={category.name} className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <button
-                          onClick={() => toggleCategory(category.name)}
-                          className={`w-5 h-5 border rounded flex items-center justify-center ${
-                            selectedCategories.includes(category.name)
-                              ? 'bg-yellow-400 border-yellow-400'
-                              : 'border-gray-500'
-                          }`}
-                        >
-                          {selectedCategories.includes(category.name) && (
-                            <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
-                              <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </button>
-                        <span className="ml-3 text-sm text-gray-300">{category.name}</span>
+                <div className="space-y-4">
+                  {categoriesWithSubcategories.map(category => (
+                    <div key={category.name}>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => toggleCategory(category.name)}
+                            className={`w-5 h-5 border rounded flex items-center justify-center ${
+                              selectedCategories.includes(category.name)
+                                ? 'bg-yellow-400 border-yellow-400'
+                                : 'border-gray-500'
+                            }`}
+                          >
+                            {selectedCategories.includes(category.name) && (
+                              <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
+                                <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </button>
+                          <span className="ml-3 text-sm text-gray-300">{category.label}</span>
+                        </div>
+                        <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">{category.count}</span>
                       </div>
-                      <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">{category.count}</span>
+                      
+                      {/* Subcategories for this category */}
+                      {selectedCategories.includes(category.name) && (
+                        <div className="ml-8 mt-2 space-y-3">
+                          {category.subcategories.map(subcategory => (
+                            <div key={subcategory.name} className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                <button
+                                  onClick={() => toggleSubcategory(subcategory.name)}
+                                  className={`w-5 h-5 border rounded flex items-center justify-center ${
+                                    selectedSubcategories.includes(subcategory.name)
+                                      ? 'bg-yellow-400 border-yellow-400'
+                                      : 'border-gray-500'
+                                  }`}
+                                >
+                                  {selectedSubcategories.includes(subcategory.name) && (
+                                    <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
+                                      <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  )}
+                                </button>
+                                <span className="ml-3 text-sm text-gray-300">{subcategory.name}</span>
+                              </div>
+                              <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">{subcategory.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
+
               <button
                 onClick={resetFilters}
                 className="w-full bg-yellow-400 text-black rounded-md py-2 font-medium hover:bg-yellow-500"

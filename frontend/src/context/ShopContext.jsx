@@ -49,24 +49,29 @@ const ShopContextProvider = ({ children }) => {
 
   // Fetch products with loading state
   const getProducts = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await axios.get(`${backendUrl}/api/product/list`);
-      if (res.data?.success) {
-        setProducts(
-          res.data.products.map((product) => ({
-            ...product,
-            priceInINR: product.price, // Store original price
-          }))
-        );
-      }
-    } catch (error) {
-      console.error("Product fetch error:", error);
-      toast.error("Error fetching products");
-    } finally {
-      setIsLoading(false);
+  setIsLoading(true);
+  try {
+    const config = token 
+      ? { headers: { Authorization: `Bearer ${token}` } } 
+      : {};
+    
+    const res = await axios.get(`${backendUrl}/api/product/list`, config);
+    
+    if (res.data?.success) {
+      setProducts(
+        res.data.products.map((product) => ({
+          ...product,
+          priceInINR: product.price, // Store original price
+        }))
+      );
     }
-  }, [backendUrl]);
+  } catch (error) {
+    console.error("Product fetch error:", error);
+    toast.error("Error fetching products");
+  } finally {
+    setIsLoading(false);
+  }
+}, [backendUrl, token]); // Add token to dependencies
 
   // Handle currency change
   const handleCurrencyChange = useCallback((newCurrency) => {
@@ -165,9 +170,9 @@ const ShopContextProvider = ({ children }) => {
   }, [fetchConversionRates]);
 
   useEffect(() => {
+      getProducts();
     if (token) {
       getUserCart(token);
-      getProducts();
     }
   }, [token, getUserCart, getProducts]);
 

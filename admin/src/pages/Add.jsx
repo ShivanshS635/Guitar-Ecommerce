@@ -4,12 +4,20 @@ import { backendUrl } from '../App';
 import { FiUpload, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
+const CATEGORIES = {
+  Body: { label: 'Body', subcategories: ['Strat', 'Tele'] },
+  Neck: { label: 'Neck', subcategories: ['Strat', 'Tele'] },
+  GuitarKits: { label: 'Guitar Kits', subcategories: ['Strat', 'Tele'] },
+};
+
+
 const Add = ({ token }) => {
   const [images, setImages] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: 'Body',
+    subcategory: CATEGORIES['Body'].subcategories[0],
     price: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,6 +33,15 @@ const Add = ({ token }) => {
 
   const removeImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCategoryChange = (e) => {
+    const category = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      category,
+      subcategory: CATEGORIES[category].subcategories[0]
+    }));
   };
 
   const handleChange = (e) => {
@@ -47,10 +64,10 @@ const Add = ({ token }) => {
 
     try {
       const data = new FormData();
-
       data.append('name', formData.name);
       data.append('description', formData.description);
       data.append('category', formData.category);
+      data.append('subcategory', formData.subcategory);
       data.append('price', formData.price);
 
       images.forEach((image, index) => {
@@ -70,6 +87,7 @@ const Add = ({ token }) => {
           name: '',
           description: '',
           category: 'Body',
+          subcategory: CATEGORIES['Body'].subcategories[0],
           price: ''
         });
       }
@@ -92,8 +110,8 @@ const Add = ({ token }) => {
           <div className="grid grid-cols-5 gap-3 mb-3">
             {images.map((image, index) => (
               <div key={index} className="relative">
-                <img 
-                  src={URL.createObjectURL(image)} 
+                <img
+                  src={URL.createObjectURL(image)}
                   alt={`Preview ${index}`}
                   className="w-20 h-20 object-cover rounded border"
                 />
@@ -109,8 +127,8 @@ const Add = ({ token }) => {
             {images.length < 10 && (
               <label className="w-20 h-20 border-2 border-dashed rounded flex items-center justify-center cursor-pointer">
                 <FiUpload size={20} />
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   onChange={handleImageChange}
                   multiple
                   accept="image/*"
@@ -147,23 +165,40 @@ const Add = ({ token }) => {
           />
         </div>
 
-        {/* Category and Price */}
+        {/* Category, Subcategory and Price */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium mb-1">Category</label>
             <select
               name="category"
               value={formData.category}
+              onChange={handleCategoryChange}
+              className="w-full p-2 border rounded"
+              required
+            >
+              {Object.entries(CATEGORIES).map(([key, val]) => (
+                <option key={key} value={key}>{val.label}</option>
+              ))}
+
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Subcategory</label>
+            <select
+              name="subcategory"
+              value={formData.subcategory}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               required
             >
-              <option value="Body">Body</option>
-              <option value="Inlay">Inlay</option>
-              <option value="Neck">Neck</option>
+              {CATEGORIES[formData.category].subcategories.map(sub => (
+                <option key={sub} value={sub}>{sub}</option>
+              ))}
             </select>
           </div>
-          <div>
+
+          <div className="col-span-2">
             <label className="block text-sm font-medium mb-1">Price (₹)</label>
             <input
               type="number"
@@ -178,8 +213,8 @@ const Add = ({ token }) => {
           </div>
         </div>
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={isSubmitting}
           className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
         >

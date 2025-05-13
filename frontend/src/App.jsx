@@ -8,6 +8,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 const Home = lazy(() => import('./pages/Home'));
+const MyProfile = lazy(() => import('./pages/MyProfile'));
 const Collection = lazy(() => import('./pages/Collection'));
 const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -52,6 +53,7 @@ const App = () => {
               <Route path="/contact" element={<Contact />} />
               <Route path="/product/:id" element={<Product />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/profile" element={<MyProfile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path='/reset-password/:token' element = {<ResetPassword/>}/>

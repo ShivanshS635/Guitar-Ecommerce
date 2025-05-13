@@ -7,7 +7,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Function for add product
 const addProduct = async (req, res) => {
   try {
-    const { name, description, price, category } = req.body;
+    const { name, description, price, category , subcategory } = req.body;
 
     // Collect all possible image fields
     const imageFields = [
@@ -42,6 +42,7 @@ const addProduct = async (req, res) => {
       description,
       price: Number(price),
       category,
+      subcategory,
       img: imageUrls,
       date: Date.now(),
     };
@@ -105,7 +106,7 @@ const singleProduct = async (req, res) => {
 const editProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, category } = req.body;
+    const { name, description, price, category, subcategory } = req.body;
 
     const product = await Product.findById(id);
     if (!product) return res.json({ success: false, message: "Product not found" });
@@ -129,6 +130,7 @@ const editProduct = async (req, res) => {
     product.description = description;
     product.price = price;
     product.category = category;
+    product.subcategory = subcategory;
     product.images = newImageUrls;
 
     await product.save();
