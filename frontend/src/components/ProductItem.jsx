@@ -2,48 +2,49 @@ import React, { useContext } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 
 const ProductItem = ({ id, img, name, price, listView = false }) => {
   const { formatPrice } = useContext(ShopContext);
 
   return (
     <motion.div
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ duration: 0.3 }}
-      className={listView ? 'flex-1' : ''}
+      whileHover={{ scale: 1.02, rotateX: 2, rotateY: 2 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      className={`relative group ${listView ? 'flex w-full' : 'w-64'} bg-gradient-to-br from-[#1a1a1a] to-[#0e0e0e]
+        rounded-2xl overflow-hidden border border-white/10 shadow-md hover:shadow-yellow-500/10 transition-all duration-300`}
     >
-      <Link
-        to={`/product/${id}`}
-        className={`relative bg-gradient-to-br from-[#1b1b1b] via-[#121212] to-[#0d0d0d] 
-        hover:from-[#222] hover:via-[#1a1a1a] hover:to-[#111] rounded-xl overflow-hidden 
-        text-yellow-100 ${listView ? 'flex gap-4 h-40' : 'w-60'} shadow-md hover:shadow-lg 
-        border border-white/5 hover:border-yellow-400/10 transition-all duration-300`}
-      >
-        {/* Image */}
-        <div className={`relative ${listView ? 'w-40 h-full' : 'aspect-[1/1]'}`}>
+      <Link to={`/product/${id}`} className={`flex ${listView ? 'flex-row' : 'flex-col'} w-full h-full`}>
+        {/* Product Image */}
+        <div
+          className={`relative overflow-hidden ${listView ? 'w-48 h-48' : 'w-full aspect-square'} bg-black`}
+        >
           <img
             src={img[0]}
             alt={name}
-            className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+            loading="lazy"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
-          {!listView && (
-            <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-              <p className="text-sm text-yellow-300 font-semibold bg-black/60 px-3 py-1 rounded-full">
-                View Product
-              </p>
-            </div>
-          )}
+          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <span className="text-yellow-400 bg-black/70 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+              View Product <ArrowRight className="w-3 h-3" />
+            </span>
+          </div>
         </div>
 
-        {/* Details */}
-        <div className="px-3 py-2 flex flex-col justify-center">
-          <p className="text-sm text-yellow-200 line-clamp-2 h-[3em] leading-snug">{name}</p>
-          <p className="text-sm font-semibold text-yellow-400">
-            {formatPrice(price)}
-          </p>
+        {/* Product Details */}
+        <div
+          className={`flex flex-col justify-center px-4 py-3 gap-1 
+            ${listView ? 'w-full' : 'text-center items-center'}`}
+        >
+          <h3 className="text-yellow-100 text-sm font-medium line-clamp-2">{name}</h3>
+          <p className="text-yellow-400 text-base font-bold">{formatPrice(price)}</p>
         </div>
       </Link>
+
+      {/* Optional glow border */}
+      <div className="absolute inset-0 rounded-2xl pointer-events-none group-hover:ring-2 group-hover:ring-yellow-400/30 transition-all duration-300" />
     </motion.div>
   );
 };
