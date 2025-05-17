@@ -12,7 +12,7 @@ const ProductItem = ({ id, img, name, price, listView = false }) => {
       whileHover={{ scale: 1.02, rotateX: 2, rotateY: 2 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className={`relative group ${listView ? 'flex w-full' : 'w-64'} bg-gradient-to-br from-[#1a1a1a] to-[#0e0e0e]
+      className={`relative group ${listView ? 'flex w-full' : 'w-full'} bg-gradient-to-br from-[#1a1a1a] to-[#0e0e0e]
         rounded-2xl overflow-hidden border border-white/10 shadow-md hover:shadow-yellow-500/10 transition-all duration-300`}
     >
       <Link to={`/product/${id}`} className={`flex ${listView ? 'flex-row' : 'flex-col'} w-full h-full`}>

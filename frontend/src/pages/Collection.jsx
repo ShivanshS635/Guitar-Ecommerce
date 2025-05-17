@@ -27,7 +27,17 @@ const Collection = () => {
   const [gridView, setGridView] = useState(true);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [activeFilterCount, setActiveFilterCount] = useState(0);
-  const [activeFilterTab, setActiveFilterTab] = useState(null);
+
+  // Close filters when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mobileFiltersOpen && !event.target.closest('.mobile-filter-panel')) {
+        setMobileFiltersOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [mobileFiltersOpen]);
 
   useEffect(() => {
     AOS.init({ duration: 600, once: true });
@@ -90,7 +100,6 @@ const Collection = () => {
     setSelectedCategories([]);
     setSelectedSubcategories([]);
     setSortType('relavent');
-    setActiveFilterTab(null);
   };
 
   // Get category counts with their subcategories
@@ -111,239 +120,247 @@ const Collection = () => {
 
   return (
     <div className="bg-[#0d0d0d] text-white min-h-screen">
-      {/* Mobile Filters */}
-      {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-40 bg-black bg-opacity-75 flex transition-opacity duration-300 md:hidden">
-          <div className="relative ml-auto h-full w-full max-w-xs flex-col bg-[#1a1a1a] p-4 overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium">Filters</h2>
-              <button onClick={() => setMobileFiltersOpen(false)} aria-label="Close">
-                <img src={assets.close} alt="close" className="h-6 w-6 invert" />
-              </button>
+      {/* Mobile Filter Panel */}
+      <div className={`fixed inset-0 z-50 transition-transform duration-300 ease-in-out transform ${mobileFiltersOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden`}>
+        <div className="absolute inset-0 bg-black bg-opacity-75" onClick={() => setMobileFiltersOpen(false)}></div>
+        <div className="mobile-filter-panel absolute right-0 top-0 h-full w-4/5 max-w-md bg-[#1a1a1a] overflow-y-auto">
+          <div className="sticky top-0 z-10 bg-[#1a1a1a] p-4 border-b border-gray-800 flex justify-between items-center">
+            <h2 className="text-xl font-bold">Filters</h2>
+            <button 
+              onClick={() => setMobileFiltersOpen(false)}
+              className="p-2 rounded-full hover:bg-gray-800"
+              aria-label="Close filters"
+            >
+              <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="p-4 space-y-6">
+            {/* Sort Section */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Sort By</h3>
+              <div className="space-y-2">
+                {[
+                  { value: 'relavent', label: 'Most Relevant' },
+                  { value: 'low-high', label: 'Price: Low to High' },
+                  { value: 'high-low', label: 'Price: High to Low' }
+                ].map((option) => (
+                  <label key={option.value} className="flex items-center space-x-3 py-2 px-3 rounded-lg bg-[#252525]">
+                    <input
+                      type="radio"
+                      checked={sortType === option.value}
+                      onChange={() => setSortType(option.value)}
+                      className="h-5 w-5 text-yellow-400 focus:ring-yellow-400"
+                    />
+                    <span className="text-gray-200">{option.label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-gray-300 mb-2">Categories</h3>
-                <div className="space-y-4">
-                  {categoriesWithSubcategories.map(category => (
-                    <div key={category.name}>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <button
-                            onClick={() => toggleCategory(category.name)}
-                            className={`w-5 h-5 border rounded flex items-center justify-center ${selectedCategories.includes(category.name)
-                              ? 'bg-yellow-400 border-yellow-400'
-                              : 'border-gray-500'
-                              }`}
-                          >
-                            {selectedCategories.includes(category.name) && (
-                              <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
-                                <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </button>
-                          <span className="ml-3 text-sm text-gray-300">{category.label}</span>
-                        </div>
-                        <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">{category.count}</span>
+            {/* Categories Section */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Categories</h3>
+              <div className="space-y-3">
+                {categoriesWithSubcategories.map(category => (
+                  <div key={category.name} className="bg-[#252525] rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleCategory(category.name)}
+                      className={`w-full flex justify-between items-center p-3 ${selectedCategories.includes(category.name) ? 'bg-[#333]' : ''}`}
+                    >
+                      <div className="flex items-center">
+                        <span className="font-medium">{category.label}</span>
                       </div>
+                      <div className="flex items-center">
+                        <span className="text-xs bg-gray-700 px-2 py-1 rounded-full mr-2">{category.count}</span>
+                        <svg 
+                          className={`w-5 h-5 transform transition-transform ${selectedCategories.includes(category.name) ? 'rotate-180' : ''}`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </button>
 
-                      {/* Subcategories */}
-                      {selectedCategories.includes(category.name) && (
-                        <div className="ml-8 mt-2 space-y-3">
-                          {category.subcategories.map(subcategory => (
-                            <div key={subcategory.name} className="flex justify-between items-center">
-                              <div className="flex items-center">
-                                <button
-                                  onClick={() => toggleSubcategory(subcategory.name)}
-                                  className={`w-5 h-5 border rounded flex items-center justify-center ${selectedSubcategories.includes(subcategory.name)
-                                    ? 'bg-yellow-400 border-yellow-400'
-                                    : 'border-gray-500'
-                                    }`}
-                                >
-                                  {selectedSubcategories.includes(subcategory.name) && (
-                                    <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
-                                      <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  )}
-                                </button>
-                                <span className="ml-3 text-sm text-gray-300">{subcategory.name}</span>
-                              </div>
-                              <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">{subcategory.count}</span>
+                    {selectedCategories.includes(category.name) && (
+                      <div className="px-3 pb-3 space-y-2">
+                        {category.subcategories.map(subcategory => (
+                          <label key={subcategory.name} className="flex items-center justify-between pl-4 pr-2 py-2 rounded hover:bg-[#333]">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedSubcategories.includes(subcategory.name)}
+                                onChange={() => toggleSubcategory(subcategory.name)}
+                                className="h-5 w-5 rounded border-gray-600 text-yellow-400 focus:ring-yellow-400"
+                              />
+                              <span className="ml-3 text-gray-200">{subcategory.name}</span>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                            <span className="text-xs bg-gray-700 px-2 py-0.5 rounded-full">{subcategory.count}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
+            </div>
 
-              <button
-                onClick={resetFilters}
-                className="w-full bg-yellow-400 text-black rounded-md py-2 font-medium hover:bg-yellow-500"
-              >
-                Reset all filters
-              </button>
+            {/* Action Buttons */}
+            <div className="sticky bottom-0 bg-[#1a1a1a] pt-4 pb-6 border-t border-gray-800">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    resetFilters();
+                    setMobileFiltersOpen(false);
+                  }}
+                  className="py-3 px-4 rounded-lg bg-gray-700 text-white font-medium hover:bg-gray-600 transition"
+                >
+                  Reset All
+                </button>
+                <button
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="py-3 px-4 rounded-lg bg-yellow-400 text-black font-medium hover:bg-yellow-500 transition"
+                >
+                  Apply Filters
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Top bar - Mobile Optimized */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-gray-700 py-4 sticky top-0 z-20 bg-[#0d0d0d]">
+          <div className="flex justify-between items-center">
+            <Title text1="All " text2="Collections" />
+            <div className="flex sm:hidden items-center space-x-3">
+              <button
+                onClick={() => setMobileFiltersOpen(true)}
+                className="relative p-2 rounded-md bg-[#1a1a1a]"
+                aria-label="Open filters"
+              >
+                <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs font-bold h-5 w-5 flex items-center justify-center rounded-full">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setGridView(!gridView)}
+                className="p-2 rounded-md bg-[#1a1a1a]"
+                aria-label={gridView ? "Switch to list view" : "Switch to grid view"}
+              >
+                {gridView ? (
+                  <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10">
-        {/* Top bar */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-gray-700 py-6 sticky top-20 z-20 bg-[#0d0d0d]">
-          <Title text1="All " text2="Collections" />
-          <div className="flex flex-col xs:flex-row items-start xs:items-center gap-2 xs:gap-4 mt-4 sm:mt-0">
+          <div className="hidden sm:flex items-center space-x-4 mt-3 sm:mt-0">
             <button
               onClick={() => setMobileFiltersOpen(true)}
-              className="group flex items-center text-sm font-medium hover:text-gray-300"
+              className="flex items-center space-x-2 bg-[#1a1a1a] px-4 py-2 rounded-md hover:bg-gray-800"
             >
+              <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
               <span>Filters</span>
               {activeFilterCount > 0 && (
-                <span className="ml-1.5 bg-yellow-400 text-black text-xs font-semibold px-1.5 py-0.5 rounded">
+                <span className="bg-yellow-400 text-black text-xs font-bold h-5 w-5 flex items-center justify-center rounded-full">
                   {activeFilterCount}
                 </span>
               )}
-              <img src={assets.filter} alt="filter" className="ml-2 h-4 w-4 invert opacity-70 group-hover:opacity-100" />
             </button>
 
-            <select
-              value={sortType}
-              onChange={(e) => setSortType(e.target.value)}
-              className="bg-[#1a1a1a] border border-gray-700 px-3 py-1.5 rounded-md text-sm hover:bg-gray-800"
-            >
-              <option value="relavent">Sort: Relevant</option>
-              <option value="low-high">Sort: Price (Low to High)</option>
-              <option value="high-low">Sort: Price (High to Low)</option>
-            </select>
-
-            <button
-              onClick={() => setGridView(!gridView)}
-              className="p-2 border border-gray-700 rounded-md hover:bg-gray-800"
-            >
-              {gridView ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Full-width Filter jsdjds Navigation */}
-        <div className="hidden md:block sticky top-24 z-40 backdrop-blur-md bg-black/70 border-b border-yellow-400/20 shadow-md">
-          {/* Category Buttns */}
-          <div className="overflow-x-auto no-scrollbar px-4 py-4 flex items-center gap-3 sm:gap-4 md:gap-6">
-            {categoriesWithSubcategories.map((category) => {
-              const isSelected = selectedCategories.includes(category.name);
-              const isActive = activeFilterTab === category.name;
-
-              return (
-                <button
-                  key={category.name}
-                  onClick={() => {
-                    toggleCategory(category.name);
-                    setActiveFilterTab(isActive ? null : category.name);
-                  }}
-                  className={`shrink-0 text-sm font-semibold px-5 py-2 rounded-full border transition duration-200
-              ${isSelected
-                      ? 'bg-yellow-400 text-black border-yellow-400 shadow-inner'
-                      : isActive
-                        ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
-                        : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-yellow-500/20 hover:text-yellow-300'
-                    }
-            `}
-                  aria-pressed={isSelected || isActive}
-                >
-                  {category.label}
-                  {category.count > 0 && (
-                    <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 text-yellow-400 border border-yellow-400/40">
-                      {category.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Clear All Filters Button */}
-            {activeFilterCount > 0 && (
-              <button
-                onClick={resetFilters}
-                className="ml-auto flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-red-900/90 text-white hover:bg-red-800 transition border border-red-600/40"
+            <div className="relative">
+              <select
+                value={sortType}
+                onChange={(e) => setSortType(e.target.value)}
+                className="appearance-none bg-[#1a1a1a] border border-gray-700 pl-3 pr-8 py-2 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-yellow-400"
               >
-                Clear All
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <option value="relavent">Sort: Relevant</option>
+                <option value="low-high">Sort: Price (Low to High)</option>
+                <option value="high-low">Sort: Price (High to Low)</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
-              </button>
-            )}
-          </div>
-
-          {/* Subcategories Section */}
-          {activeFilterTab && (
-            <div className="px-6 py-4 border-t border-gray-800 bg-[#121212]">
-              <h3 className="text-xs font-bold text-yellow-400 uppercase mb-4 tracking-wider select-none">
-                {CATEGORIES[activeFilterTab]?.label} Subcategories
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {categoriesWithSubcategories
-                  .find(c => c.name === activeFilterTab)
-                  ?.subcategories.map((subcategory) => (
-                    <label
-                      key={subcategory.name}
-                      className="flex items-center justify-between bg-[#1e1e1e] hover:bg-[#2a2a2a] rounded-lg px-4 py-2 border border-gray-700 hover:border-yellow-500 cursor-pointer transition select-none"
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedSubcategories.includes(subcategory.name)}
-                          onChange={() => toggleSubcategory(subcategory.name)}
-                          className="h-5 w-5 accent-yellow-400"
-                        />
-                        <span className="text-sm text-gray-200">{subcategory.name}</span>
-                      </div>
-                      <span className="text-xs bg-gray-700 text-yellow-300 px-2 py-0.5 rounded-full font-semibold">
-                        {subcategory.count}
-                      </span>
-                    </label>
-                  ))}
               </div>
             </div>
-          )}
+
+            <div className="hidden md:flex space-x-1 bg-[#1a1a1a] p-1 rounded-md">
+              <button
+                onClick={() => setGridView(true)}
+                className={`p-2 rounded ${gridView ? 'bg-gray-800' : 'hover:bg-gray-800'}`}
+                aria-label="Grid view"
+              >
+                <svg className="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setGridView(false)}
+                className={`p-2 rounded ${!gridView ? 'bg-gray-800' : 'hover:bg-gray-800'}`}
+                aria-label="List view"
+              >
+                <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Content */}
         <div className="pt-6 pb-12">
           {/* Product Grid */}
-          <main className="flex-1">
+          <main>
             {filteredProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <svg className="h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                <svg className="h-16 w-16 text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <h3 className="mt-2 text-lg font-medium text-gray-300">No products found</h3>
-                <p className="mt-1 text-sm text-gray-500">Try adjusting your filters.</p>
+                <h3 className="text-xl font-medium text-gray-300 mb-2">No products found</h3>
+                <p className="text-gray-500 mb-6">Try adjusting your search or filter criteria</p>
                 <button
                   onClick={resetFilters}
-                  className="mt-4 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-md font-medium"
+                  className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-black font-medium rounded-lg transition"
                 >
                   Reset all filters
                 </button>
               </div>
             ) : (
-              <div className={gridView ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-6"}>
+              <div className={
+                gridView 
+                  ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" 
+                  : "space-y-4"
+              }>
                 {filteredProducts.map((item, index) => (
                   <div
                     key={item._id}
                     data-aos="fade-up"
-                    data-aos-delay={index * 80}
-                    className={gridView ? "" : "flex gap-4 bg-[#1a1a1a] p-4 rounded-xl"}
+                    data-aos-delay={(index % 8) * 50} // Limit delay to prevent long waits
+                    className={
+                      gridView 
+                        ? "transform transition-transform hover:scale-[1.02]" 
+                        : "bg-[#1a1a1a] rounded-xl overflow-hidden w-full"
+                    }
                   >
                     <ProductItem
                       id={item._id}
@@ -359,15 +376,6 @@ const Collection = () => {
           </main>
         </div>
       </div>
-      <style jsx>{`
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </div>
   );
 };
