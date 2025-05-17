@@ -35,7 +35,7 @@ app.use('/api/inquiry' , inquiryRouter)
 app.use('/api/contact', contactRouter);
 app.use('/api/gallery' , galleryRouter)
 
-
+//comment
 app.get('/', (req, res) => {
   res.send('API Working');
 })
