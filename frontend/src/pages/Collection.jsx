@@ -236,7 +236,7 @@ const Collection = () => {
           </div>
         </div>
 
-        {/* Full-width Filter Navigation */}
+        {/* Full-width Filter jsdjds Navigation */}
         <div className="hidden md:block sticky top-24 z-40 backdrop-blur-md bg-black/70 border-b border-yellow-400/20 shadow-md">
           {/* Category Buttons */}
           <div className="overflow-x-auto no-scrollbar px-4 py-4 flex items-center gap-3 sm:gap-4 md:gap-6">
